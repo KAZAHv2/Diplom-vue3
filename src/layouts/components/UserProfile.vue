@@ -1,5 +1,8 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 const avatarBadgeProps = {
   dot: true,
@@ -8,6 +11,10 @@ const avatarBadgeProps = {
   offsetY: 3,
   color: 'success',
   bordered: true,
+}
+
+const logout = () => {
+  userStore.logout()
 }
 </script>
 
@@ -55,7 +62,7 @@ const avatarBadgeProps = {
           <VDivider class="my-2" />
 
           <!-- 👉 Profile -->
-          <VListItem link>
+          <VListItem to="/account-settings">
             <template #prepend>
               <VIcon
                 class="me-2"
@@ -64,46 +71,7 @@ const avatarBadgeProps = {
               />
             </template>
 
-            <VListItemTitle>Profile</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 Settings -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="mdi-cog-outline"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>Settings</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 Pricing -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="mdi-currency-usd"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>Pricing</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 FAQ -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="mdi-help-circle-outline"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>FAQ</VListItemTitle>
+            <VListItemTitle>Профіль</VListItemTitle>
           </VListItem>
 
           <!-- Divider -->
@@ -119,7 +87,7 @@ const avatarBadgeProps = {
               />
             </template>
 
-            <VListItemTitle>Logout</VListItemTitle>
+            <VListItemTitle @click='logout'>Вийти</VListItemTitle>
           </VListItem>
         </VList>
       </VMenu>

@@ -1,34 +1,17 @@
-<<<<<<< HEAD
-# vue-youtube
+## Project Setup
 
-## Project setup
-```
+```sh
 npm install
 ```
 
-### Compiles and hot-reloads for development
-```
-npm run serve
+### Compile and Hot-Reload for Development
+
+```sh
+npm run dev
 ```
 
-### Compiles and minifies for production
-```
+### Type-Check, Compile and Minify for Production
+
+```sh
 npm run build
 ```
-
-### Run your tests
-```
-npm run test
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
-=======
-# Diplom-vue3
- 
->>>>>>> parent of ecf8c5b (+)
