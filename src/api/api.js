@@ -1,11 +1,12 @@
 import axios from 'axios'
 
-const apiService = axios.create({
-    baseURL: import.meta.env.VITE_APP_API_URL,
+const api = axios.create({
+    baseURL: 'https://eduprog.grassbusinesslabs.tk/api/v1/',
   },
 )
 
-apiService.interceptors.request.use((config) => {
+api.interceptors.request.use((config) => {
+  config.baseURL = 'https://eduprog.grassbusinesslabs.tk/api/v1/'
   if (localStorage.getItem('token')) {
     config.headers = {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -17,7 +18,7 @@ apiService.interceptors.request.use((config) => {
 
 const getData = async (url) => {
   try {
-    const response = await apiService.get(url)
+    const response = await api.get(url)
     return response.data
   } catch (e) {
     return Promise.reject(e)
@@ -25,7 +26,7 @@ const getData = async (url) => {
 }
 const postData = async (url, payload) => {
   try {
-    const response = await apiService.post(url, { ...payload })
+    const response = await api.post(url, { ...payload })
     return response.data
   } catch (e) {
     return Promise.reject(e)
@@ -33,7 +34,7 @@ const postData = async (url, payload) => {
 }
 const deleteData = async (url) => {
   try {
-    const response = await apiService.delete(url)
+    const response = await api.delete(url)
     return response.data
   } catch (e) {
     return Promise.reject(e)
@@ -41,11 +42,11 @@ const deleteData = async (url) => {
 }
 const editData = async (url, payload) => {
   try {
-    const response = await apiService.put(url, { ...payload })
+    const response = await api.put(url, { ...payload })
     return response.data
   } catch (e) {
     return Promise.reject(e)
   }
 }
 
-export { getData, postData, deleteData, editData, apiService }
+export { getData, postData, deleteData, editData, api }

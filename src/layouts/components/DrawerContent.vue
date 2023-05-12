@@ -45,13 +45,6 @@ const vuetifyTheme = useTheme()
     />
     <VerticalNavLink
       :item="{
-        title: 'Головна',
-        to: 'home',
-        icon: { icon: 'mdi-home-outline' }
-      }"
-    />
-    <VerticalNavLink
-      :item="{
         title: 'Account Settings',
         to: 'account-settings',
         icon: { icon: 'mdi-account-cog-outline' }
