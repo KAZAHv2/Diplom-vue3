@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # vue-youtube
 
 ## Project setup
@@ -27,3 +28,7 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+=======
+# Diplom-vue3
+ 
+>>>>>>> parent of ecf8c5b (+)
