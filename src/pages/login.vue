@@ -7,17 +7,25 @@ import authV1MaskLight from '@/assets/images/pages/auth-v1-mask-light.png'
 import authV1Tree2 from '@/assets/images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@/assets/images/pages/auth-v1-tree.png'
 import { useUserStore } from '@/stores/user'
+import router from '../router'
 
 const userStore = useUserStore()
 const form = ref({
   email: '',
   password: '',
-  remember: false,
 })
 const vuetifyTheme = useTheme()
 const authThemeMask = computed(() => {
   return vuetifyTheme.global.name.value === 'light' ? authV1MaskLight : authV1MaskDark
 })
+
+const rulesUser = ref({
+  emailRules: [
+    v => !!v || "Пошта обов'язкова",
+    v => /.+@.+/.test(v) || 'Некоректний запис пошти',
+  ],
+})
+
 const isPasswordVisible = ref(false)
 
 const authData = computed(() => {
@@ -25,7 +33,7 @@ const authData = computed(() => {
 })
 
 const logIn = async () => {
-  userStore.login({email: '', password: ''})
+  await userStore.login(form.value)
 }
 </script>
 
@@ -43,18 +51,9 @@ const logIn = async () => {
         </template>
 
         <VCardTitle class='font-weight-semibold text-2xl text-uppercase'>
-          Materio
+          Увійти
         </VCardTitle>
       </VCardItem>
-
-      <VCardText class='pt-2'>
-        <h5 class='text-h5 font-weight-semibold mb-1'>
-          Welcome to Materio! 👋🏻
-        </h5>
-        <p class='mb-0'>
-          Please sign-in to your account and start the adventure
-        </p>
-      </VCardText>
 
       <VCardText>
         <VForm @submit.prevent='() => {}'>
@@ -63,8 +62,9 @@ const logIn = async () => {
             <VCol cols='12'>
               <VTextField
                 v-model='form.email'
-                label='Email'
+                label='Пошта'
                 type='email'
+                :rules="rulesUser.emailRules"
               />
             </VCol>
 
@@ -72,7 +72,7 @@ const logIn = async () => {
             <VCol cols='12'>
               <VTextField
                 v-model='form.password'
-                label='Password'
+                label='Пароль'
                 :type="isPasswordVisible ? 'text' : 'password'"
                 :append-inner-icon="isPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
                 @click:append-inner='isPasswordVisible = !isPasswordVisible'
@@ -80,16 +80,12 @@ const logIn = async () => {
 
               <!-- remember me checkbox -->
               <div class='d-flex align-center justify-space-between flex-wrap mt-1 mb-4'>
-                <VCheckbox
-                  v-model='form.remember'
-                  label='Remember me'
-                />
 
                 <a
                   class='ms-2 mb-1'
                   href='javascript:void(0)'
                 >
-                  Forgot Password?
+                  Забули пароль?
                 </a>
               </div>
 
@@ -98,7 +94,7 @@ const logIn = async () => {
                 block
                 @click='logIn'
               >
-                Login
+                Увійти
               </VBtn>
             </VCol>
 
@@ -107,30 +103,13 @@ const logIn = async () => {
               cols='12'
               class='text-center text-base'
             >
-              <span>New on our platform?</span>
+              <span>Ще немає аккаунту?</span>
               <RouterLink
                 class='text-primary ms-2'
                 :to="{ name: 'register' }"
               >
-                Create an account
+                Зареєструйтесь
               </RouterLink>
-            </VCol>
-
-            <VCol
-              cols='12'
-              class='d-flex align-center'
-            >
-              <VDivider />
-              <span class='mx-4'>or</span>
-              <VDivider />
-            </VCol>
-
-            <!-- auth providers -->
-            <VCol
-              cols='12'
-              class='text-center'
-            >
-              <AuthProvider />
             </VCol>
           </VRow>
         </VForm>
@@ -161,7 +140,8 @@ const logIn = async () => {
 @use "@core/scss/pages/page-auth.scss";
 </style>
 
-<route lang='yaml'>
+<route lang="yaml">
 meta:
-layout: blank
+  layout: blank
+  requiresUnAuth: true
 </route>
