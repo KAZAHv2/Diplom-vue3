@@ -6,18 +6,77 @@ import authV1MaskDark from '@/assets/images/pages/auth-v1-mask-dark.png'
 import authV1MaskLight from '@/assets/images/pages/auth-v1-mask-light.png'
 import authV1Tree2 from '@/assets/images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@/assets/images/pages/auth-v1-tree.png'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 const form = ref({
-  username: '',
+  name: '',
   email: '',
   password: '',
-  privacyPolicies: false,
+})
+
+const rulesUser = ref({
+  emailRules: [
+    v => !!v || "Пошта обов'язкова",
+    v => /.+@.+/.test(v) || 'Некоректний запис пошти',
+  ],
 })
 const vuetifyTheme = useTheme()
 const authThemeMask = computed(() => {
   return vuetifyTheme.global.name.value === 'light' ? authV1MaskLight : authV1MaskDark
 })
+
+const hideError = async () => {
+  isErrorVisible.value = false
+}
+
+const singUp = async () => {
+  const password = form.value.password
+  const name = form.value.name
+  const oneLetterRegex = ".*[a-z].*"
+  const oneDigitRegex = ".*\\d+.*"
+  errors.length = 0
+  if(name.length < 3) {
+    isErrorVisible.value = true
+    errors.push("Надто коротке ім'я")
+  }
+  if(name.match(oneDigitRegex)) {
+    isErrorVisible.value = true
+    errors.push("Ім'я не повинно містити цифр")
+  }
+  if(password.length < 8) {
+    isErrorVisible.value = true
+    errors.push("Мінімальна кількість символів паролю - 8")
+  }
+  if(!password.match(oneLetterRegex)) {
+    isErrorVisible.value = true
+    errors.push("Пароль повинен містити мінімум одну літеру малого регістру")
+  }
+  if(!password.match(oneDigitRegex)) {
+    isErrorVisible.value = true
+    errors.push("Пароль повинен містити мінімум одну цифру")
+  } 
+  if(!isErrorVisible.value) {
+    try {
+      isErrorVisible.value = 
+      await userStore.signUp(form.value)
+    } catch(error) {
+      isErrorVisible.value = true
+      let errorMessage
+      if(error.response.status == 400) {
+        errorMessage = "Користувач з такою поштою уже існує"
+      } else {
+        errorMessage = "Щось пішло не так"
+      }
+      errors.push(errorMessage)
+    }
+  }
+}
+
 const isPasswordVisible = ref(false)
+const isErrorVisible = ref(false)
+const errors = []
 </script>
 
 <template>
@@ -34,18 +93,9 @@ const isPasswordVisible = ref(false)
         </template>
 
         <VCardTitle class="font-weight-semibold text-2xl text-uppercase">
-          Materio
+          Реєстрація
         </VCardTitle>
       </VCardItem>
-
-      <VCardText class="pt-2">
-        <h5 class="text-h5 font-weight-semibold mb-1">
-          Adventure starts here 🚀
-        </h5>
-        <p class="mb-0">
-          Make your app management easy and fun!
-        </p>
-      </VCardText>
 
       <VCardText>
         <VForm @submit.prevent="() => {}">
@@ -53,84 +103,74 @@ const isPasswordVisible = ref(false)
             <!-- Username -->
             <VCol cols="12">
               <VTextField
-                v-model="form.username"
-                label="Username"
+                v-model.trim="form.name"
+                @input="isErrorVisible = fasle"
+                label="Ім'я"
               />
             </VCol>
             <!-- email -->
             <VCol cols="12">
               <VTextField
-                v-model="form.email"
-                label="Email"
+                v-model.trim="form.email"
+                label="Пошта"
                 type="email"
+                :rules="rulesUser.emailRules"
+                @input="isErrorVisible = fasle"
+                required
               />
             </VCol>
 
             <!-- password -->
             <VCol cols="12">
               <VTextField
-                v-model="form.password"
-                label="Password"
+                v-model.trim="form.password"
+                label="Пароль"
+                @input="isErrorVisible = fasle"
                 :type="isPasswordVisible ? 'text' : 'password'"
                 :append-inner-icon="isPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
                 @click:append-inner="isPasswordVisible = !isPasswordVisible"
               />
-              <div class="d-flex align-center mt-1 mb-4">
-                <VCheckbox
-                  id="privacy-policy"
-                  v-model="form.privacyPolicies"
-                  inline
-                />
-                <VLabel
-                  for="privacy-policy"
-                  style="opacity: 1;"
-                >
-                  <span class="me-1">I agree to</span>
-                  <a
-                    href="javascript:void(0)"
-                    class="text-primary"
-                  >privacy policy & terms</a>
-                </VLabel>
-              </div>
+            </VCol>
 
+            <VCol cols="12">
+              <VAlert 
+                type="error" 
+                :class="isErrorVisible ? 'd-flex' : 'd-none'"
+              >
+                <ul 
+                  v-for="error in errors" 
+                  :key="error" 
+                >
+                  <li>
+                    {{ errors.length > 1 ? '•' : ''}} {{error}}
+                  </li>
+                </ul>
+              </VAlert>
+            </VCol>
+
+            <VCol cols="12">
               <VBtn
                 block
                 type="submit"
+                @click="singUp"
               >
-                Sign up
+                Зареєструватись
               </VBtn>
             </VCol>
-
             <!-- login instead -->
             <VCol
               cols="12"
               class="text-center text-base"
             >
-              <span>Already have an account?</span>
+              <span>Уже є аккаунт?</span>
               <RouterLink
                 class="text-primary ms-2"
                 to="login"
               >
-                Sign in instead
+                Увійдіть
               </RouterLink>
             </VCol>
-
-            <VCol
-              cols="12"
-              class="d-flex align-center"
-            >
-              <VDivider />
-              <span class="mx-4">or</span>
-              <VDivider />
-            </VCol>
-
             <!-- auth providers -->
-            <VCol
-              cols="12"
-              class="text-center"
-            >
-              <AuthProvider />
-            </VCol>
           </VRow>
         </VForm>
       </VCardText>
@@ -163,4 +203,5 @@ const isPasswordVisible = ref(false)
 <route lang="yaml">
 meta:
   layout: blank
+  requiresUnAuth: true
 </route>

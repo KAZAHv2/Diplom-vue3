@@ -50,6 +50,13 @@ const iconsList = [
   'mdi-emoticon-happy-outline',
   'mdi-file-multiple-outline',
   'mdi-flask-empty-outline',
+  'mdi-table',
+  'mdi-sort-variant',
+  'mdi-format-list-bulleted',
+  'mdi-format-line-style',
+  'mdi-plus',
+  'mdi-check-bold',
+  'mdi-close-thick',
 ]
 </script>
 

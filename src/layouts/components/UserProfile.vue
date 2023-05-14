@@ -1,6 +1,11 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
-
+import { useUserStore } from '@/stores/user'
+const userStore = useUserStore()
+onMounted( async () => {
+    await userStore.fetchUserData()
+})
+const userData = computed(() => userStore.getUserData)
 const avatarBadgeProps = {
   dot: true,
   location: 'bottom right',
@@ -8,6 +13,10 @@ const avatarBadgeProps = {
   offsetY: 3,
   color: 'success',
   bordered: true,
+}
+
+const logout = () => {
+  userStore.logout()
 }
 </script>
 
@@ -45,17 +54,14 @@ const avatarBadgeProps = {
             </template>
 
             <VListItemTitle class="font-weight-semibold">
-              John Doe
+              {{userData.name}}
             </VListItemTitle>
-            <VListItemSubtitle class="text-disabled">
-              Admin
-            </VListItemSubtitle>
           </VListItem>
 
           <VDivider class="my-2" />
 
           <!-- 👉 Profile -->
-          <VListItem link>
+          <VListItem to="/account-settings">
             <template #prepend>
               <VIcon
                 class="me-2"
@@ -64,53 +70,14 @@ const avatarBadgeProps = {
               />
             </template>
 
-            <VListItemTitle>Profile</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 Settings -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="mdi-cog-outline"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>Settings</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 Pricing -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="mdi-currency-usd"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>Pricing</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 FAQ -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="mdi-help-circle-outline"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>FAQ</VListItemTitle>
+            <VListItemTitle>Профіль</VListItemTitle>
           </VListItem>
 
           <!-- Divider -->
           <VDivider class="my-2" />
 
           <!-- 👉 Logout -->
-          <VListItem to="/login">
+          <VListItem @click='logout' to="/login">
             <template #prepend>
               <VIcon
                 class="me-2"
@@ -119,7 +86,7 @@ const avatarBadgeProps = {
               />
             </template>
 
-            <VListItemTitle>Logout</VListItemTitle>
+            <VListItemTitle>Вийти</VListItemTitle>
           </VListItem>
         </VList>
       </VMenu>
