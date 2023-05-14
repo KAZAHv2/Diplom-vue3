@@ -1,19 +1,14 @@
 <script setup>
-import TableBasic from '@/views/user-interface/tables/TableBasic.vue'
-import TableDark from '@/views/user-interface/tables/TableDark.vue'
-import TableDensity from '@/views/user-interface/tables/TableDensity.vue'
-import TableHeight from '@/views/user-interface/tables/TableHeight.vue'
-import TableFixedHeader from '@/views/user-interface/tables/TableFixedHeader.vue'
 import { useEduProgsStore } from '@/stores/eduProgs.js'
 import { computed } from 'vue-demi'
 import moment from 'moment'
 import router from '../router'
 const eduProgsStore = useEduProgsStore()
 
-//return { eduProgs: useEduProgsStore.getEduProgs }
+
 
 onMounted( async () => {
-  await eduProgsStore.fetchEduProgs()
+
 })
 
 let currentEduProg = null

@@ -67,6 +67,7 @@ export const useEduProgsStore = defineStore({
     },
     async createComponent(payload) {
       const response = await postData('eduprogs/comps/create', payload)
+      
       return response.id
     },
     async editComponent(id, payload) {
@@ -101,12 +102,7 @@ export const useEduProgsStore = defineStore({
       const response = await deleteData('/eduprogs/scheme/' + id)
     },
     async fetchPossibleRelations(eduId, compId) {
-      const response = await getData('/eduprogs/compRelations/posRel/' + eduId + '/' + compId)
-      return response
-    },
-    async fetchCompetencies(eduId) {
-      const response = await getData('/eduprogs/competencies/byEduprogId/' + eduId)
-      this.competencies = response
+      return await getData('/eduprogs/compRelations/posRel/' + eduId + '/' + compId)
     },
     async createCompetencyRelation(eduprogId, componentId, competencyId) {
       const newRelation = {
@@ -146,24 +142,21 @@ export const useEduProgsStore = defineStore({
     },
     async exportToExcel(eduId) {
       await getFile('/eduprogs/toExcel/'+eduId).then(response => {
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', 'ОПП '+eduId+'.xlsx');
-        document.body.appendChild(link);
-        link.click();
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', 'ОПП '+eduId+'.xlsx')
+        document.body.appendChild(link)
+        link.click()
       })},
     async fetchRelations(eduId){
-      const response = await getData('/eduprogs/compRelations/'+eduId);
-      return response
+      return await getData('/eduprogs/compRelations/'+eduId)
     },
     async createRelation(payload){
-      const response = await postData('/eduprogs/compRelations/create', payload);
-      return response
+      return await postData('/eduprogs/compRelations/create', payload)
     },
     async deleteRelation(baseId, childId){
-      const response = await deleteData('/eduprogs/compRelations/'+baseId+'/'+childId);
-      return response
+      return await deleteData('/eduprogs/compRelations/'+baseId+'/'+childId)
     },
   },
 })
