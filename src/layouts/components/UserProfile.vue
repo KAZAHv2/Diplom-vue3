@@ -1,9 +1,12 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
-import { useUserStore } from '@/stores/user'
+import { useUserStore, auth } from '@/stores/user'
 const userStore = useUserStore()
 onMounted( async () => {
-    await userStore.fetchUserData()
+  await userStore.fetchUserData()
+  console.log(userStore.fetchUserData())
+  console.log(userStore.getUserData)
+
 })
 const userData = computed(() => userStore.getUserData)
 const avatarBadgeProps = {
@@ -54,7 +57,7 @@ const logout = () => {
             </template>
 
             <VListItemTitle class="font-weight-semibold">
-              {{userData.name}}
+              {{ userData.displayName }}
             </VListItemTitle>
           </VListItem>
 
@@ -77,7 +80,10 @@ const logout = () => {
           <VDivider class="my-2" />
 
           <!-- 👉 Logout -->
-          <VListItem @click='logout' to="/login">
+          <VListItem
+            to="/login"
+            @click="logout"
+          >
             <template #prepend>
               <VIcon
                 class="me-2"

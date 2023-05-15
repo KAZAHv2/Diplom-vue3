@@ -2,8 +2,13 @@
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
 import { useUserStore } from '@/stores/user'
 const userStore = useUserStore()
+const userData = ref({
+  name : userStore.getUserData.displayName,
+  email : userStore.getUserData.email,
+})
+
 onMounted( async () => {
-    await userStore.fetchUserData()
+  await userStore.fetchUserData()
 })
 const oneDigitRegex = ".*\\d+.*"
 const changePassword =( async() => {
@@ -18,28 +23,22 @@ const changePassword =( async() => {
   ) {
     isPasswordErrorVisible.value = true
     passwordErrorText.value = "Пароль не відповідає вимогам"
-  } else if(currentPassword.value == newPassword.value){
-    isPasswordErrorVisible.value = true
-    passwordErrorText.value = "Старий та новий пароль співпадають"
-  } else {
+  }  else {
     try {
-      await userStore.changePassword(currentPassword.value, newPassword.value)
+      await userStore.changePassword( newPassword.value)
       await userStore.fetchUserData()
       newPassword.value=''
       confirmPassword.value=''
-      currentPassword.value=''
     } catch(error) {
       isPasswordErrorVisible.value = true
-      passwordErrorText.value = "Невірний старий пароль"
+      passwordErrorText.value = "Невірний новий пароль"
     }
   }
 })
-const userData = computed(() => userStore.getUserData)
-const avatarImg= avatar1;
-const isCurrentPasswordVisible = ref(false)
+const newEmail = ref('')
+const avatarImg= avatar1
 const isNewPasswordVisible = ref(false)
 const isConfirmPasswordVisible = ref(false)
-const currentPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
 const passwordRequirements = [
@@ -50,6 +49,8 @@ const passwordRequirements = [
 const isPasswordErrorVisible = ref(false)
 const passwordErrorText = ref('')
 const isNameErrorVisible = ref(false)
+const isEmailErrorVisible = ref(false)
+const emailErrorText = ref('')
 const nameErrorText = ref('')
 const newName = ref('')
 const changeName =( async() => {
@@ -62,25 +63,35 @@ const changeName =( async() => {
   } else {
     await userStore.changeUserName(newName.value)
     await userStore.fetchUserData()
+    console.log(userStore.getUserData.displayName)
+    userData.value.name = userStore.getUserData.displayName
     newName.value=''
   }
 })
-// const changeAvatar = file => {
-//   const fileReader = new FileReader()
-//   const {files} = file.target
-//   if (files && files.length) {
-//     fileReader.readAsDataURL(files[0])
-//     fileReader.onload = () => {
-//       if (typeof fileReader.result === 'string')
-//         accountDataLocal.value.avatarImg = fileReader.result
-//     }
-//   }
-// }
 
-// reset avatar image
-// const resetAvatar = () => {
-//   accountDataLocal.value.avatarImg = accountData.avatarImg
-// }
+const rulesUser = ref({
+  emailRules: [
+    v => !!v || "Пошта обов'язкова",
+    v => /.+@.+/.test(v) || 'Некоректний запис пошти',
+  ],
+})
+
+const changeEmail = (async () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  console.log(newEmail.value)
+  if (newEmail.value.length === 0) {
+    isEmailErrorVisible.value = true
+    emailErrorText.value = "Введіть адресу електронної пошти"
+  } else if (!emailRegex.test(newEmail.value)){
+    isEmailErrorVisible.value = true
+    emailErrorText.value = "Невірний запис електронної пошти"
+  }else {
+    await userStore.changeEmail(newEmail.value)
+    await userStore.fetchUserData()
+    userData.value.email = userStore.getUserData.email
+    newEmail.value=''
+  }
+})
 </script>
 
 <template>
@@ -96,69 +107,22 @@ const changeName =( async() => {
             :image="avatarImg"
           />
           
-          <v-row>
+          <VRow>
             <p class="text-body-1 mb-0">
               Iм'я: {{ userData.name }}
             </p>
-          </v-row>
-          <v-row>
+          </VRow>
+          <VRow>
             <p class="text-body-1 mb-0">
               Пошта: {{ userData.email }}
             </p>
-          </v-row>
-          
-          <!-- 👉 Upload Photo -->
-          <!-- <form
-            ref="refForm"
-            class="d-flex flex-column justify-center gap-5"
-          >
-            <div class="d-flex flex-wrap gap-2">
-              <VBtn
-                color="primary"
-                @click="refInputEl?.click()"
-              >
-                <VIcon
-                  icon="mdi-cloud-upload-outline"
-                  class="d-sm-none"
-                />
-                <span class="d-none d-sm-block">Завантажити нове фото</span>
-              </VBtn>
-
-              <input
-                ref="refInputEl"
-                type="file"
-                name="file"
-                accept=".jpeg,.png,.jpg,GIF"
-                hidden
-                @input="changeAvatar"
-              >
-
-              <VBtn
-                type="reset"
-                color="error"
-                variant="tonal"
-                @click="resetAvatar"
-              >
-                <span class="d-none d-sm-block">Повернути назад</span>
-                <VIcon
-                  icon="mdi-refresh"
-                  class="d-sm-none"
-                />
-              </VBtn>
-            </div>
-
-            <p class="text-body-1 mb-0">
-              Дозволено JPG, GIF або PNG. Максимальний розмір 800K
-            </p>
-          </form> -->
-
+          </VRow>
         </VCardText>
-
       </VCard>
-      </VCol>
-      <VCol cols="12">
-        <VCard title="Змінити ім'я">
-        <VCardText >
+    </VCol>
+    <VCol cols="12">
+      <VCard title="Змінити ім'я">
+        <VCardText>
           <!-- 👉 Form -->
           <VForm class="mt-6">
             <VRow>
@@ -168,12 +132,12 @@ const changeName =( async() => {
                 cols="12"
               >
                 <VTextField
-                  label="Введіть сюди нове ім'я"
-                  @input='isNameErrorVisible = false'
                   v-model="newName"
+                  label="Введіть сюди нове ім'я"
+                  @input="isNameErrorVisible = false"
                 />
               
-                <div class='mt-4'>
+                <div class="mt-4">
                   <VAlert 
                     type="error" 
                     :class="isNameErrorVisible ? 'd-flex' : 'd-none'"
@@ -189,7 +153,9 @@ const changeName =( async() => {
                 cols="12"
                 class="d-flex flex-wrap gap-4"
               >
-                <VBtn @click="changeName">Зберегти зміни</VBtn>
+                <VBtn @click="changeName">
+                  Зберегти зміни
+                </VBtn>
               </VCol>
             </VRow>
           </VForm>
@@ -198,27 +164,54 @@ const changeName =( async() => {
     </VCol>
 
     <VCol cols="12">
+      <VCard title="Змінити пошту">
+        <VCardText>
+          <!-- 👉 Form -->
+          <VForm class="mt-6">
+            <VRow>
+              <!-- 👉 First Name -->
+              <VCol
+                md="6"
+                cols="12"
+              >
+                <VTextField
+                  v-model="newEmail"
+                  label="Введіть сюди нову пошту"
+                  type="email"
+                  @input="isEmailErrorVisible = false"
+                />
+
+                <div class="mt-4">
+                  <VAlert
+                    type="error"
+                    :class="isEmailErrorVisible ? 'd-flex' : 'd-none'"
+                  >
+                    {{ unref(emailErrorText) }}
+                  </VAlert>
+                </div>
+              </VCol>
+
+
+              <!-- 👉 Form Actions -->
+              <VCol
+                cols="12"
+                class="d-flex flex-wrap gap-4"
+              >
+                <VBtn @click="changeEmail">
+                  Зберегти зміни
+                </VBtn>
+              </VCol>
+            </VRow>
+          </VForm>
+        </VCardText>
+      </VCard>
+    </VCol>
+
+
+    <VCol cols="12">
       <VCard title="Змінити пароль">
         <VForm>
           <VCardText>
-            <!-- 👉 Current Password -->
-            <VRow class="mb-3">
-              <VCol
-                cols="12"
-                md="6"
-              >
-                <!-- 👉 current password -->
-                <VTextField
-                  v-model="currentPassword"
-                  :type="isCurrentPasswordVisible ? 'text' : 'password'"
-                  :append-inner-icon="isCurrentPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-                  label="Старий пароль"
-                  @click:append-inner="isCurrentPasswordVisible = !isCurrentPasswordVisible"
-                  @input='isPasswordErrorVisible = false'
-                />
-              </VCol>
-            </VRow>
-
             <!-- 👉 New Password -->
             <VRow>
               <VCol
@@ -232,7 +225,7 @@ const changeName =( async() => {
                   :append-inner-icon="isNewPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
                   label="Новий пароль"
                   @click:append-inner="isNewPasswordVisible = !isNewPasswordVisible"
-                  @input='isPasswordErrorVisible = false'
+                  @input="isPasswordErrorVisible = false"
                 />
               </VCol>
                 
@@ -247,12 +240,12 @@ const changeName =( async() => {
                   :append-inner-icon="isConfirmPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
                   label="Повторіть пароль"
                   @click:append-inner="isConfirmPasswordVisible = !isConfirmPasswordVisible"
-                  @input='isPasswordErrorVisible = false'
+                  @input="isPasswordErrorVisible = false"
                 />
               </VCol>
             </VRow>
 
-            <div class='mt-4'>
+            <div class="mt-4">
               <VAlert 
                 type="error" 
                 :class="isPasswordErrorVisible ? 'd-flex' : 'd-none'"
@@ -288,7 +281,9 @@ const changeName =( async() => {
 
           <!-- 👉 Action Buttons -->
           <VCardText class="d-flex flex-wrap gap-4">
-            <VBtn @click="changePassword">Зберегти зміни</VBtn>
+            <VBtn @click="changePassword">
+              Зберегти зміни
+            </VBtn>
 
             <VBtn
               type="reset"

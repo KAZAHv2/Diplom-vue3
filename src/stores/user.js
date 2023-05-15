@@ -1,4 +1,3 @@
-import { editData, getData, postData } from '@/api/http/apiService'
 import { defineStore } from 'pinia'
 import router from '../router'
 
@@ -7,7 +6,7 @@ import router from '../router'
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app"
 import { getFirestore } from "firebase/firestore"
-import {getAuth} from 'firebase/auth'
+import {getAuth,createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, signOut,updatePassword,updateEmail} from 'firebase/auth'
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -45,7 +44,7 @@ export const useUserStore = defineStore({
   getters: {
     isUserAuth: state => !!state.token,
     getUserData: state => state.user,
-    tokenIsValid: state => state.tokenValid
+    tokenIsValid: state => state.tokenValid,
   },
 
   actions: {
@@ -55,59 +54,90 @@ export const useUserStore = defineStore({
     },
     async checkToken(){
       try{
-        const response = await getData('users');
-        if(response.id){
-          this.tokenValid=true;
-        }
-        else{
-          this.tokenValid = false;
-        }
+        auth.onIdTokenChanged(user => {
+          if (user) {
+            this.tokenValid=true
+          } else {
+            this.tokenValid = false
+          }
+        })
       }
       catch(err){
         this.tokenValid = false
       }
-      
     },
+
     async fetchUserData() {
-      const response = await getData('users');
-      this.user = response
-      return response
+      this.user = auth.currentUser
+      console.log(this.user)
+
     },
+
     async login(payload) {
-      const response = await postData('auth/login', payload)
-      this.setToken(response.token)
-      router.replace('/')
+      console.log(payload)
+
+      await signInWithEmailAndPassword(auth,payload.email,payload.password)
+        .then(()=> {
+          this.setToken(auth.currentUser.accessToken)
+          router.replace('/')
+        })
     },
 
     async signUp(payload) {
-      const response = await postData('auth/register', payload)
-      this.setToken(response.token)
-      router.replace('/')
+      // register new user
+      await createUserWithEmailAndPassword(auth,payload.email,payload.password)
+        .then(() => {
+          // update 'displayName'
+          updateProfile(auth.currentUser, {
+            displayName: payload.name,
+          })
+            .then(() => {
+              this.setToken(auth.currentUser.accessToken)
+              router.replace('/')
+            })
+        })
+      console.log(payload)
     },
 
     async logout() {
+      await signOut(auth)
       this.token = null
       localStorage.clear()
       router.replace('/login')
     },
+
     async changeUserName(enteredName) {
-      const newName={
-        name: enteredName
-      }
-      const response = await editData('users', newName);
-    },
-    async changePassword(oldPassword, newPassword) {
-      const passwords={
-        oldPassword: oldPassword,
-        newPassword: newPassword,
-      }
-      const userData = await this.fetchUserData();
-      await postData('auth/change-pwd', passwords)
-      const response = await postData('auth/login', {
-        email: userData.email,
-        password: newPassword,
+      console.log(enteredName)
+      await updateProfile(auth.currentUser, {
+        displayName: enteredName,
+      }).then(function() {
+
+      }).catch(function(error) {
+        console.log(error)
       })
-      this.setToken(response.token)
     },
+
+    async changePassword(newPassword) {
+      console.log(newPassword)
+      await updatePassword(auth.currentUser, newPassword)
+        .then(function() {
+          this.setToken(auth.currentUser.accessToken)
+        }).catch(function(error) {
+          console.log(error)
+        })
+
+
+    },
+
+    async changeEmail(newEmail){
+      await updateEmail(auth.currentUser, newEmail)
+        .then(function() {
+          this.setToken(auth.currentUser.accessToken)
+        }).catch(function(error) {
+          console.log(error)
+        })
+
+    },
+
   },
 })

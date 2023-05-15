@@ -1,4 +1,3 @@
-import { deleteData, editData, getData, getFile, postData } from '@/api/http/apiService'
 import { defineStore } from 'pinia'
 import router from '../router'
 export const useEduProgsStore = defineStore({
