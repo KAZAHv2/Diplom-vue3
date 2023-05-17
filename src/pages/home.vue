@@ -1,315 +1,230 @@
 <script setup>
-import { useEduProgsStore } from '@/stores/eduProgs.js'
-import { computed } from 'vue-demi'
-import moment from 'moment'
-import router from '../router'
-const eduProgsStore = useEduProgsStore()
-
-
-
+import { auth, db, useUserStore } from '@/stores/user'
+import {DataDB} from '@/stores/dataDB'
+import {v4 as uuidv4} from 'uuid'
+const dataBase = DataDB()
+const tasks = ref({})
 onMounted( async () => {
-
+  await allTask()
 })
 
-let currentEduProg = null
-let newNameEduProg = ref(null)
-const eduProgs = computed(() => eduProgsStore.getEduProgs)
+// read
+
+// add
 
 
-const deleteEduProg =( async id => {
-  await eduProgsStore.deleteEduProg(id)
-  await eduProgsStore.fetchEduProgs()
+// update
+
+// delete
+
+// firebase.ref()
+// firebase.set()
+
+const addDiolog = ref(false)
+const task = ref({
+  uuid : '',
+  name:'',
+  description:'',
+  date:'',
+  clietn_id:'',
+  maket_link:'',
+  status: false,
 })
-const editNameEduProg =( async() => {
-  currentEduProg.name = newNameEduProg.value
-  await eduProgsStore.editNameEduProg(currentEduProg, currentEduProg.id)
-  newNameEduProg.value=null
-  dialogRename.value=false
-})
-const createEduProg =( async() => {
-  await eduProgsStore.createEduProg(newEduProg.value)
-  dialogCreate.value=false
-  await eduProgsStore.fetchEduProgs()
-})
-
-// const createEduProg =( async() => {
-//   console.log(newEduProg)
-//   await eduProgsStore.createEduProg(newEduProg)
-// })
-
-// const props = defineProps({
-//   modelValue: {
-//     type: [Boolean],
-//     default: false
-//   }
-// })
-// const emit = defineEmits(['update:modelValue'])
-// let dialog = computed({
-//   get () {
-//     return props.modelValue
-//   },
-//   set (value) {
-//     return emit('update:modelValue', value)
-//   }
-// })
 
 
-const dialogCreate = ref(false)
-const dialogRename = ref(false)
-const dialogDelete = ref(false)
-const createEduProgDialog = function dialogg() {
-  dialogCreate.value=true
-}
-const renameEduProgDialog = function dialogg(id) {
-  dialogRename.value=true
-  currentEduProg = id
-}
-const deleteEduProgDialog= function dialogg(id) {
-  dialogDelete.value=true
-  currentEduProg = id
-}
-const editEduProg = function edit(event, id) {
-  console.log(event)
-  router.replace('/eduprogs/'+id)
+function getCurrentDateTime() {
+  const currentDate = new Date()
+
+  const day = String(currentDate.getDate()).padStart(2, '0')
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0')
+  const year = currentDate.getFullYear()
+  const hours = String(currentDate.getHours()).padStart(2, '0')
+  const minutes = String(currentDate.getMinutes()).padStart(2, '0')
+  const seconds = String(currentDate.getSeconds()).padStart(2, '0')
+
+  return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`
 }
 
+function addTask(){
+  addDiolog.value = true
+}
+async function createTask() {
+  task.value.date = getCurrentDateTime()
+  task.value.uuid = uuidv4()
+  console.log(task.value)
+  await dataBase.addTask(task.value)
+  cancelAddTask()
+}
+function cancelAddTask(){
+  addDiolog.value = false
+  task.value.name = ''
+  task.value.description= ''
+  task.value.clietn_id= ''
+  task.value.maket_link = ''
+}
 
-const newEduProg = ref({
-  name :'',
-  education_level :'',
-  stage :'',
-  speciality :'',
-  knowledge_field :'',
-})
+async function allTask() {
+  try {
+    tasks.value = await dataBase.fetchTasks()
+    console.log(tasks.value)
+
+  } catch (error) {
+    console.error(error)
+
+  }
+}
+
+async function udateTask(){
+  await dataBase.updateTask(tasks.value)
+}
+
+async function deleteTask(){
+  await dataBase.removeTask(tasks.value)
+}
 </script>
 
 <template>
-  <VCardText>
-    <VBtn
-      dark
-      @click="createEduProgDialog"
+  <VRow justify="center">
+    <VDialog
+      v-model="addDiolog"
+      persistent
+      width="1024"
     >
-      Створити ОПП
-    </VBtn>
-  </VCardText>
+      <VCard>
+        <VCardTitle>
+          <span class="text-h5">Замовлення</span>
+        </VCardTitle>
+        <VCardText>
+          <VContainer>
+            <VRow>
+              <VCol
+                cols="12"
+              >
+                <VTextField
+                  v-model="task.name"
+                  label="Назва замовлення*"
+                  required
+                />
+              </VCol>
 
-
-  <VDialog
-    v-model="dialogCreate"
-    persistent
-    max-width="600px"
-  >
-    <VCard>
-      <VCardTitle>
-        <span class="text-h5">Створення нової ОПП</span>
-      </VCardTitle>
-      <VCardText>
-        <VContainer>
-          <VRow>
-            <VCol
-              cols="12"
-            >
-              <VTextField
-                v-model="newEduProg.name"
-                label="Назва документу "
-                required
-              />
-            </VCol>
-            <VCol
-              cols="12"
-            >
-              <VTextField
-                v-model="newEduProg.education_level"
-                label="Освітній рівень"
-              />
-            </VCol>
-            <VCol
-              cols="12"
-            >
-              <VTextField
-                v-model="newEduProg.stage"
-                label="Освітній ступінь"
-                required
-              />
-            </VCol>
-            <VCol
-              cols="12"
-            >
-              <VTextField
-                v-model="newEduProg.speciality"
-                label="Спеціальність"
-                required
-              />
-            </VCol>
-            <VCol
-              cols="12"
-            >
-              <VTextField
-                v-model="newEduProg.knowledge_field"
-                label="Галузь знань"
-                required
-              />
-            </VCol>
-          </VRow>
-        </VContainer>
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          color="blue darken-1"
-          text
-          @click="dialogCreate = false"
-        >
-          Закрити
-        </VBtn>
-        <VBtn
-          text
-          :disabled="!(newEduProg.knowledge_field && newEduProg.speciality && newEduProg.name &&newEduProg.education_level && newEduProg.stage)"
-          @click="createEduProg"
-        >
-          <!-- Need fix, user need to reload page for check new EduProg -->
-          Створити
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
-
-
-  <VTable v-if="eduProgs.length>0">
-    <thead>
-      <tr>
-        <th class="text-uppercase">
-          Назва
-        </th>
-        <th class="text-center text-uppercase">
-          Спеціальність
-        </th>
-        <th class="text-center text-uppercase">
-          Рівень знань
-        </th>
-        <th class="text-center text-uppercase">
-          Дата редагування
-        </th>
-        <th class="text-center text-uppercase" />
-      </tr>
-    </thead>
-    <tbody>
-      <tr 
-        class="eduprog-item"
-        v-for="item in eduProgs"
-        :key="item.id"
-        @click="editEduProg($event, item.id)"
-      >
-        <td>{{ item.name }}</td>
-        <td class="text-center">
-          {{ item.speciality }}
-        </td>
-        <td class="text-center">
-          {{ item.education_level }}
-        </td>
-        <td class="text-center">
-          {{ moment(item.updated_date).format('DD.MM.YYYY HH:mm:ss') }}
-        </td>
-        <td class="text-center">
-          <VBtn
-            icon="mdi-pencil"
-            size="x-small"
-            style="margin-right:2% "
-            @click.stop="renameEduProgDialog(item)"
-          />
-
-          <VBtn
-            icon="mdi-trash-can"
-            size="x-small"
-            @click.stop="deleteEduProgDialog(item)"
-          />
-        </td>
-      </tr>
-    </tbody>
-  </VTable>
-  <VAlert
-    v-else
-    border="left"
-    text
-    type="info"
-    prominent
-  >
-    Поки що не створено жодної освітньо-професійної програми.
-  </VAlert>
-  <VDialog
-    v-model="dialogRename"
-    persistent
-    max-width="600"
-  >
-    <VCard>
-      <VCardTitle>Перейменувати ОПП</VCardTitle>
-      <VCardText>
-        <VContainer>
-          <VRow>
-            <VCol
-              cols="12"
-            >
-              <VTextField
-                v-model="newNameEduProg"
-                label="Введіть нову назву ОПП"
-                required
-              />
-            </VCol>
-          </VRow>
-        </VContainer>
-
+              <VCol cols="12">
+                <VTextField
+                  v-model="task.clietn_id"
+                  label="Замовник*"
+                  required
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextField
+                  v-model="task.description"
+                  label="Опис замовлення*"
+                  required
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextField
+                  v-model="task.maket_link"
+                  label="Посилання на макет*"
+                  required
+                />
+              </VCol>
+            </VRow>
+          </VContainer>
+        </VCardText>
         <VCardActions>
           <VSpacer />
           <VBtn
-            text
-            @click="dialogRename = false"
+            color="blue-darken-1"
+            variant="text"
+            @click="cancelAddTask"
           >
-            Відмінити
+            Закрити
           </VBtn>
           <VBtn
-            text
-            @click="editNameEduProg(); 
-            dialogRename = false"
+            color="blue-darken-1"
+            variant="text"
+            @click="createTask"
           >
-            Зберегти
+            Створити
           </VBtn>
         </VCardActions>
-      </VCardText>
-    </VCard>
-  </VDialog>
+      </VCard>
+    </VDialog>
+  </VRow>
 
 
-  <VDialog
-    v-model="dialogDelete"
-    max-width="290"
-  >
-    <VCard>
-      <VCardTitle>
-        Підтвердіть видалення
-      </VCardTitle>
-      <VCardText>
-        Ви впевнені  що хочете видалити ОПП: {{ currentEduProg.name }}?
-      </VCardText>
+  <VRow>
+    <VCol>
+      <VTable>
+        <thead>
+          <tr>
+            <th
+              style="text-align: center;  align-items: center;"
+              colspan="4"
+            >
+              <p style=" font-size: medium; margin-top: 1%">
+                Замовлення
+              </p>
 
-      <VCardActions>
-        <VBtn
-          color="green darken-1"
-          text
-          @click="dialogDelete = false"
-        >
-          Ні
-        </VBtn>
+              <VBtn
+                icon="mdi-plus"
+                size="x-small"
+                @click=" addTask"
+              />
+            </th>
+          </tr>
+          <tr>
+            <th colspan="4">
+              <hr style="min-height: 1px; width: 100%">
+            </th>
+          </tr>
+          <tr>
+            <th style="text-align: center">
+              Назва замовлення
+            </th>
+            <th style="text-align: center">
+              Дата замовлення
+            </th>
+            <th style="text-align: center">
+              Замовник
+            </th>
+            <th style="text-align: center">
+              Cтан замовлення
+            </th>
+          </tr>
+        </thead>
+      </VTable>
+      <VCol
+        v-for="(item, index) in tasks"
+        :key="index"
+      >
+        <VCard>
+          <details style="margin-left: 1%">
+            <summary>
+<VTable>
 
-        <VBtn
-          color="green darken-1"
-          text
-          @click="deleteEduProg(currentEduProg.id); dialogDelete = false"
-        >
-          Так
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+  <tbody>
+
+<tr>
+  <td style="text-align: center"> <span> {{item.name}}</span></td>
+  <td style="text-align: center"> <span>{{item.date}}</span></td>
+  <td > <span> {{item.clietn_id }} </span></td>
+  <td >  <span>{{item.status}}</span></td>
+</tr>
+
+  </tbody>
+
+</VTable>
+            </summary>
+            Опис замовлення:
+            <span>{{item.description }}</span> <br>
+            Посилання на макет:
+            <span>{{item.maket_link}}</span>
+          </details>
+        </VCard>
+      </VCol>
+    </VCol>
+  </VRow>
 </template>
 
 <route lang="yaml">

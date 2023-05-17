@@ -5,8 +5,9 @@ import router from '../router'
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app"
-import { getFirestore } from "firebase/firestore"
+import { getDatabase} from "firebase/database"
 import {getAuth,createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, signOut,updatePassword,updateEmail} from 'firebase/auth'
+
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -21,14 +22,13 @@ const firebaseConfig = {
   messagingSenderId: "209774935604",
   appId: "1:209774935604:web:8fba49382a7a8d40499461",
   measurementId: "G-X4BTVV1H8B",
+  databaseURL: "https://diplom-5ae23-default-rtdb.europe-west1.firebasedatabase.app",
 }
 
-// Initialize Firebase
-initializeApp(firebaseConfig)
+const firebaseApp = initializeApp(firebaseConfig)
 
-export const db = getFirestore()
-
-export const auth = getAuth()
+export const db = getDatabase(firebaseApp)
+export const auth = getAuth(firebaseApp)
 
 
 
