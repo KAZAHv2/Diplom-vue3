@@ -21,6 +21,7 @@ onMounted( async () => {
 // firebase.set()
 
 const addDiolog = ref(false)
+const updateDiolog = ref(false)
 const task = ref({
   uuid : '',
   name:'',
@@ -53,6 +54,7 @@ async function createTask() {
   task.value.uuid = uuidv4()
   console.log(task.value)
   await dataBase.addTask(task.value)
+  await allTask()
   cancelAddTask()
 }
 function cancelAddTask(){
@@ -74,12 +76,20 @@ async function allTask() {
   }
 }
 
-async function udateTask(){
-  await dataBase.updateTask(tasks.value)
+function udateTask(item){
+  console.log(item)
+  updateDiolog.value = true
 }
 
-async function deleteTask(){
-  await dataBase.removeTask(tasks.value)
+async function editTask() {
+  updateDiolog.value = false
+  await dataBase.updateTask(item)
+}
+
+async function deleteTask(item){
+  console.log(item)
+  await dataBase.removeTask(item)
+  await allTask()
 }
 </script>
 
@@ -153,31 +163,88 @@ async function deleteTask(){
   </VRow>
 
 
+  <VRow justify="center">
+    <VDialog
+      v-model="updateDiolog"
+      persistent
+      width="1024"
+    >
+      <VCard>
+        <VCardTitle>
+          <span class="text-h5">Замовлення</span>
+        </VCardTitle>
+        <VCardText>
+          <VContainer>
+            <VRow>
+              <VCol
+                cols="12"
+              >
+                <VTextField
+                  v-model="task.name"
+                  label="Назва замовлення*"
+                  required
+                />
+              </VCol>
+
+              <VCol cols="12">
+                <VTextField
+                  v-model="task.clietn_id"
+                  label="Замовник*"
+                  required
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextField
+                  v-model="task.description"
+                  label="Опис замовлення*"
+                  required
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextField
+                  v-model="task.maket_link"
+                  label="Посилання на макет*"
+                  required
+                />
+              </VCol>
+            </VRow>
+          </VContainer>
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn
+            color="blue-darken-1"
+            variant="text"
+            @click="cancelAddTask"
+          >
+            Закрити
+          </VBtn>
+          <VBtn
+            color="blue-darken-1"
+            variant="text"
+            @click="editTask"
+          >
+            Оновити
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+  </VRow>
+
+
+
+  <VBtn
+    dark
+    class="mb-3"
+    @click="addTask"
+  >
+    Додати замовлення
+  </VBtn>
+
   <VRow>
     <VCol>
       <VTable>
         <thead>
-          <tr>
-            <th
-              style="text-align: center;  align-items: center;"
-              colspan="4"
-            >
-              <p style=" font-size: medium; margin-top: 1%">
-                Замовлення
-              </p>
-
-              <VBtn
-                icon="mdi-plus"
-                size="x-small"
-                @click=" addTask"
-              />
-            </th>
-          </tr>
-          <tr>
-            <th colspan="4">
-              <hr style="min-height: 1px; width: 100%">
-            </th>
-          </tr>
           <tr>
             <th style="text-align: center">
               Назва замовлення
@@ -191,38 +258,43 @@ async function deleteTask(){
             <th style="text-align: center">
               Cтан замовлення
             </th>
+            <th />
           </tr>
         </thead>
+        <tbody>
+          <tr
+            v-for="(item, index) in tasks"
+            :key="index"
+          >
+            <td style="text-align: center">
+              <span> {{ item.name }}</span>
+            </td>
+            <td style="text-align: center">
+              <span>{{ item.date }}</span>
+            </td>
+            <td style="text-align: center">
+              <span> {{ item.clietn_id }} </span>
+            </td>
+            <td style="text-align: center">
+              <span>{{ item.status }}</span>
+            </td>
+            <td>
+              <VBtn
+                icon="mdi-pencil"
+                size="x-small"
+                style="margin-right: 2%"
+                @click.stop="udateTask(item)"
+              />
+              <VBtn
+                style="margin-right: 2%"
+                icon="mdi-trash-can"
+                size="x-small"
+                @click.stop="deleteTask(item)"
+              />
+            </td>
+          </tr>
+        </tbody>
       </VTable>
-      <VCol
-        v-for="(item, index) in tasks"
-        :key="index"
-      >
-        <VCard>
-          <details style="margin-left: 1%">
-            <summary>
-<VTable>
-
-  <tbody>
-
-<tr>
-  <td style="text-align: center"> <span> {{item.name}}</span></td>
-  <td style="text-align: center"> <span>{{item.date}}</span></td>
-  <td > <span> {{item.clietn_id }} </span></td>
-  <td >  <span>{{item.status}}</span></td>
-</tr>
-
-  </tbody>
-
-</VTable>
-            </summary>
-            Опис замовлення:
-            <span>{{item.description }}</span> <br>
-            Посилання на макет:
-            <span>{{item.maket_link}}</span>
-          </details>
-        </VCard>
-      </VCol>
     </VCol>
   </VRow>
 </template>
@@ -231,3 +303,7 @@ async function deleteTask(){
 meta:
   requiresAuth: true
 </route>
+
+
+https://github.com/KAZAHv2/Diplom-vue3
+https://diplom-5ae23.web.app/

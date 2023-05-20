@@ -24,7 +24,7 @@ const vuetifyTheme = useTheme()
 
       <Transition name="vertical-nav-app-title">
         <h1 class="font-weight-semibold leading-normal text-xl text-uppercase">
-          Materio
+          Tasks
         </h1>
       </Transition>
     </RouterLink>
@@ -37,6 +37,20 @@ const vuetifyTheme = useTheme()
         title: 'Головна',
         to: 'home',
         icon: { icon: 'mdi-home-outline' }
+      }"
+    />
+    <VerticalNavLink
+      :item="{
+        title: 'Замовники',
+        to: 'customer',
+        icon: { icon: 'mdi-account' }
+      }"
+    />
+    <VerticalNavLink
+      :item="{
+        title: 'Календар',
+        to: 'calendar',
+        icon: { icon: 'mdi-calendar-account' }
       }"
     />
     <VerticalNavLink

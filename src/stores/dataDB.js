@@ -59,15 +59,13 @@ export const DataDB = defineStore({
         .then(() => {
           console.log("Update")
         })
-
     },
 
     async removeTask(payload){
-      await remove(ref(db, `/${auth.currentUser.uid}/User_Task/` + payload.uuid))
+      await remove(ref(db, `/${auth.currentUser.uid}/User_Task/` + payload.taskId))
         .then(() => {
           console.log("Delete")
         })
-
     },
 
 
