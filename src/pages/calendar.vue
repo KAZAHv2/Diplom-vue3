@@ -1,11 +1,9 @@
 <template>
-
+gfhjgfhj
 </template>
 
 <script>
-export default {
-  name: 'calendar',
-}
+
 </script>
 
 <style scoped>

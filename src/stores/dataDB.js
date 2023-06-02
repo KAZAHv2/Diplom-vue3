@@ -24,9 +24,25 @@ export const DataDB = defineStore({
           taskId : payload.uuid,
           description: payload.description,
           date: payload.date,
+          date_do: payload.Ldate,
           clietn_id: payload.clietn_id,
           maket_link: payload.maket_link,
           status: false,
+        })
+        .then(() => {
+          console.log("Gotovo")
+        })
+    },
+
+    async addСustomer(payload){
+      console.log(payload)
+      await set(ref(db, `/${auth.currentUser.uid}/Customer/` + payload.customerID),
+        {
+          name: payload.customerName,
+          customerId : payload.customerID,
+          description: payload.customerDescription,
+          email: payload.customerEmail,
+          phone: payload.customerPhone,
         })
         .then(() => {
           console.log("Gotovo")
@@ -51,15 +67,50 @@ export const DataDB = defineStore({
       }
     },
 
+    async fetchCustomers() {
+      const dbRef = ref(db)
+      try {
+        const snapshot = await get(child(dbRef, `/${auth.currentUser.uid}/Customer/`))
+        if (snapshot.exists()) {
+          return snapshot.val()
+        } else {
+          console.log("No data available")
+
+          return null
+        }
+      } catch (error) {
+        console.error(error)
+
+        return null
+      }
+    },
+
+
+
     async updateTask(payload){
       await update(ref(db, `/${auth.currentUser.uid}/User_Task/` + payload.uuid),
         {
           name: payload.name,
+          description: payload.description,
+          date_do: payload.Ldate,
+          clietn_id: payload.clietn_id,
+          maket_link: payload.maket_link,
         })
         .then(() => {
           console.log("Update")
         })
     },
+
+    async updateStatus(payload){
+      await update(ref(db, `/${auth.currentUser.uid}/User_Task/` + payload.taskId),
+        {
+          status: payload.status,
+        })
+        .then(() => {
+          console.log("Update")
+        })
+    },
+
 
     async removeTask(payload){
       await remove(ref(db, `/${auth.currentUser.uid}/User_Task/` + payload.taskId))

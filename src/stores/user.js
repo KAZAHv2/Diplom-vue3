@@ -141,3 +141,7 @@ export const useUserStore = defineStore({
 
   },
 })
+
+
+// npm run dev
+// firebase init

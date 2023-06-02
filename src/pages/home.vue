@@ -4,32 +4,37 @@ import {DataDB} from '@/stores/dataDB'
 import {v4 as uuidv4} from 'uuid'
 const dataBase = DataDB()
 const tasks = ref({})
+const customers = ref([])
 onMounted( async () => {
   await allTask()
+  sortTusk()
 })
 
-// read
 
-// add
-
-
-// update
-
-// delete
-
-// firebase.ref()
-// firebase.set()
-
+const info = ref(false)
+const selectedItem = ref()
+const selectedSortOption = ref('Станом виконання')
+const admit = ref(false)
 const addDiolog = ref(false)
 const updateDiolog = ref(false)
+const showCustomerFields = ref(false)
 const task = ref({
   uuid : '',
   name:'',
   description:'',
   date:'',
+  Ldate:'',
   clietn_id:'',
   maket_link:'',
   status: false,
+})
+
+const customer = ref({
+  customerName:'',
+  customerEmail:'',
+  customerPhone:'',
+  customerDescription:'',
+  customerID:'',
 })
 
 
@@ -39,61 +44,198 @@ function getCurrentDateTime() {
   const day = String(currentDate.getDate()).padStart(2, '0')
   const month = String(currentDate.getMonth() + 1).padStart(2, '0')
   const year = currentDate.getFullYear()
-  const hours = String(currentDate.getHours()).padStart(2, '0')
-  const minutes = String(currentDate.getMinutes()).padStart(2, '0')
-  const seconds = String(currentDate.getSeconds()).padStart(2, '0')
 
-  return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`
+
+  return `${day}.${month}.${year}`
 }
 
 function addTask(){
   addDiolog.value = true
 }
 async function createTask() {
+  customer.value.customerID = uuidv4()
   task.value.date = getCurrentDateTime()
   task.value.uuid = uuidv4()
   console.log(task.value)
-  await dataBase.addTask(task.value)
+
+  console.log(customer.value)
+
+  if (Object.values(customer.value).some(value => value === '')) {
+    console.log('lox')
+    console.log(customer.value)
+
+    await dataBase.addTask(task.value)
+    cancelAddTask()
+  } else {
+    console.log('ne lox')
+    task.value.clietn_id = customer.value.customerID
+
+    await dataBase.addTask(task.value)
+    await dataBase.addСustomer(customer.value)
+    cancelAddTask()
+
+  }
+  showCustomerFields.value = false
   await allTask()
-  cancelAddTask()
 }
 function cancelAddTask(){
+  showCustomerFields.value = false
   addDiolog.value = false
   task.value.name = ''
   task.value.description= ''
   task.value.clietn_id= ''
   task.value.maket_link = ''
+  task.value.Ldate = ''
+
+  customer.value.customerName = ''
+  customer.value.customerPhone = ''
+  customer.value.customerEmail = ''
+  customer.value.customerDescription = ''
 }
 
 async function allTask() {
   try {
-    tasks.value = await dataBase.fetchTasks()
+    tasks.value = Object.values (await dataBase.fetchTasks())
     console.log(tasks.value)
+    customers.value = Object.values(await dataBase.fetchCustomers())
+    console.log(customers.value)
 
   } catch (error) {
     console.error(error)
 
   }
+  sortTusk()
 }
 
 function udateTask(item){
   console.log(item)
   updateDiolog.value = true
+  task.value.name = item.name
+  task.value.description= item.description
+  task.value.clietn_id= item.clietn_id
+  customer.value.customerName = getCustomerName(item.clietn_id)
+  task.value.maket_link = item.maket_link
+  task.value.Ldate = item.date_do
+  task.value. uuid = item.taskId
 }
 
-async function editTask() {
-  updateDiolog.value = false
-  await dataBase.updateTask(item)
-}
+async function edit(){
+  customer.value.customerID = uuidv4()
+  if (Object.values(customer.value).some(value => value === '')) {
+    console.log('lox')
+    console.log(customer.value)
+    await dataBase.updateTask(task.value)
+    cancelAddTask()
+  } else {
+    console.log('ne lox')
+    task.value.clietn_id = customer.value.customerID
 
-async function deleteTask(item){
-  console.log(item)
-  await dataBase.removeTask(item)
+    await dataBase.updateTask(task.value)
+    await dataBase.addСustomer(customer.value)
+    cancelAddTask()
+  }
+
+
   await allTask()
+  updateDiolog.value = false
+  cancelAddTask()
+}
+
+function clancel(){
+  updateDiolog.value = false
+  cancelAddTask()
+}
+
+
+
+async function deleteTask(){
+  console.log(selectedItem.value)
+  await dataBase.removeTask(selectedItem.value)
+  await allTask()
+}
+
+
+function  handleCustomerSelection(name) {
+  console.log(customers.value)
+  console.log(name)
+  if(customers.value === null ){
+    showCustomerFields.value = true
+  } else {
+    const foundCustomer = customers.value.find(customer => customer.name === name)
+    console.log(foundCustomer)
+    if (foundCustomer) {
+      console.log(foundCustomer.customerId)
+      task.value.clietn_id = foundCustomer.customerId
+      showCustomerFields.value = false
+    } else {
+      showCustomerFields.value = true
+    }
+  }
+}
+
+function getCustomerName(customerId) {
+  const id = customers.value.find(customer => customer.customerId === customerId)
+
+  return id ? id.name : ''
+}
+
+function getName(customerId){
+  const id = customers.value.find(customer => customer.customerId === customerId)
+  customer.value.customerName = id.name
+  console.log(selectedItem.value)
+}
+
+async function updateStatus(item){
+  await dataBase.updateStatus(item)
+}
+
+function sortTusk(){
+
+  if (selectedSortOption.value === 'Датою') {
+    tasks.value.sort((a, b) => new Date(a.date) - new Date(b.date))
+  } else if (selectedSortOption.value === 'Назвою') {
+    tasks.value.sort((a, b) => a.name.localeCompare(b.name))
+  } else if (selectedSortOption.value === 'Станом виконання') {
+    tasks.value.sort((a, b) => a.status - b.status)
+  }
+  
 }
 </script>
 
 <template>
+  <VDialog
+    v-model="admit"
+    max-width="290"
+  >
+    <VCard>
+      <VCardTitle>
+        Підтвердіть видалення
+      </VCardTitle>
+      <VCardText>
+        Ви впевнені  що хочете видалити завдання?
+      </VCardText>
+
+      <VCardActions>
+        <VBtn
+          color="green darken-1"
+          text
+          @click="admit = false"
+        >
+          Ні
+        </VBtn>
+
+        <VBtn
+          color="green darken-1"
+          text
+          @click="deleteTask(); admit = false"
+        >
+          Так
+        </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
+
+
   <VRow justify="center">
     <VDialog
       v-model="addDiolog"
@@ -101,42 +243,98 @@ async function deleteTask(item){
       width="1024"
     >
       <VCard>
-        <VCardTitle>
-          <span class="text-h5">Замовлення</span>
+        <VCardTitle style="margin-left: 1%; margin-top: 2%">
+          <VTextField
+            v-model="task.name"
+            class="custom-text-field"
+            label="Назва замовлення"
+            required
+            variant="underlined"
+          />
         </VCardTitle>
         <VCardText>
           <VContainer>
             <VRow>
-              <VCol
-                cols="12"
-              >
+              <VCol cols="12">
                 <VTextField
-                  v-model="task.name"
-                  label="Назва замовлення*"
+                  v-model="task.Ldate"
+                  label="Дата завершення"
                   required
+                  type="date"
+                  variant="underlined"
                 />
               </VCol>
 
               <VCol cols="12">
-                <VTextField
-                  v-model="task.clietn_id"
-                  label="Замовник*"
-                  required
-                />
-              </VCol>
-              <VCol cols="12">
-                <VTextField
+                <VTextarea
                   v-model="task.description"
-                  label="Опис замовлення*"
-                  required
+                  label="Опис замовлення"
+                  maxlength="1000"
+                  variant="underlined"
+                  clearable
+                  auto-grow
+                  rows="1"
+                  row-height="15"
                 />
               </VCol>
               <VCol cols="12">
                 <VTextField
                   v-model="task.maket_link"
-                  label="Посилання на макет*"
+                  label="Посилання на макет проекту"
                   required
+                  type="url"
+                  variant="underlined"
                 />
+              </VCol>
+              <VCol cols="12">
+                <VCombobox
+                  v-model="customer.customerName"
+                  :items="customers"
+                  item-value="customerId"
+                  item-title="name"
+                  label="Ім'я замовника"
+                  variant="underlined"
+                  @blur="handleCustomerSelection(customer.customerName)"
+                />
+              </VCol>
+
+              <VCol
+                v-if="showCustomerFields"
+                cols="12"
+              >
+                <!-- Дополнительные поля для ввода данных заказчика -->
+                <!-- Например: -->
+
+                <VCol cols="12">
+                  <VTextField
+                    v-model="customer.customerPhone"
+                    label="Телефон замовника"
+                    required
+                    variant="underlined"
+                  />
+                </VCol>
+
+                <VCol cols="12">
+                  <VTextarea
+                    v-model="customer.customerDescription"
+                    label="Про замовника"
+                    maxlength="1000"
+                    variant="underlined"
+                    clearable
+                    auto-grow
+                    rows="1"
+                    row-height="15"
+                  />
+                </VCol>
+
+                <VCol cols="12">
+                  <VTextField
+                    v-model="customer.customerEmail"
+                    label="Email замовника"
+                    required
+                    variant="underlined"
+                  />
+                </VCol>
               </VCol>
             </VRow>
           </VContainer>
@@ -170,41 +368,185 @@ async function deleteTask(item){
       width="1024"
     >
       <VCard>
-        <VCardTitle>
-          <span class="text-h5">Замовлення</span>
+        <VCardTitle style="margin-left: 1%; margin-top: 2%">
+          <VTextField
+            v-model="task.name"
+            class="custom-text-field"
+            label="Назва замовлення"
+            required
+            variant="underlined"
+          />
         </VCardTitle>
         <VCardText>
           <VContainer>
             <VRow>
-              <VCol
-                cols="12"
-              >
+              <VCol cols="12">
                 <VTextField
-                  v-model="task.name"
-                  label="Назва замовлення*"
+                  v-model="task.Ldate"
+                  label="Дата завершення"
                   required
+                  type="date"
+                  variant="underlined"
                 />
               </VCol>
 
               <VCol cols="12">
-                <VTextField
-                  v-model="task.clietn_id"
-                  label="Замовник*"
-                  required
-                />
-              </VCol>
-              <VCol cols="12">
-                <VTextField
+                <VTextarea
                   v-model="task.description"
-                  label="Опис замовлення*"
-                  required
+                  label="Опис замовлення"
+                  maxlength="1000"
+                  variant="underlined"
+                  clearable
+                  auto-grow
+                  rows="1"
+                  row-height="15"
                 />
               </VCol>
               <VCol cols="12">
                 <VTextField
                   v-model="task.maket_link"
-                  label="Посилання на макет*"
+                  label="Посилання на макет проекту"
                   required
+                  type="url"
+                  variant="underlined"
+                />
+              </VCol>
+              <VCol cols="12">
+                <VCombobox
+                  v-model="customer.customerName"
+                  :items="customers"
+                  item-value="customerId"
+                  item-title="name"
+                  label="Ім'я замовника"
+                  variant="underlined"
+                  @blur="handleCustomerSelection(customer.customerName)"
+                />
+              </VCol>
+
+              <VCol
+                v-if="showCustomerFields"
+                cols="12"
+              >
+                <!-- Дополнительные поля для ввода данных заказчика -->
+                <!-- Например: -->
+
+                <VCol cols="12">
+                  <VTextField
+                    v-model="customer.customerPhone"
+                    label="Телефон замовника"
+                    required
+                    variant="underlined"
+                  />
+                </VCol>
+
+                <VCol cols="12">
+                  <VTextarea
+                    v-model="customer.customerDescription"
+                    label="Про замовника"
+                    maxlength="1000"
+                    variant="underlined"
+                    clearable
+                    auto-grow
+                    rows="1"
+                    row-height="15"
+                  />
+                </VCol>
+
+                <VCol cols="12">
+                  <VTextField
+                    v-model="customer.customerEmail"
+                    label="Email замовника"
+                    required
+                    variant="underlined"
+                  />
+                </VCol>
+              </VCol>
+            </VRow>
+          </VContainer>
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn
+            color="blue-darken-1"
+            variant="text"
+            @click="clancel"
+          >
+            Закрити
+          </VBtn>
+          <VBtn
+            color="blue-darken-1"
+            variant="text"
+            @click="edit"
+          >
+            Змінити
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+  </VRow>
+
+  <VRow justify="center">
+    <VDialog
+      v-model="info"
+      persistent
+      width="1024"
+    >
+      <VCard>
+        <VCardTitle style="margin-left: 1%; margin-top: 2%">
+          <VTextField
+            v-model="selectedItem.name"
+            class="custom-text-field"
+            label="Назва замовлення"
+            required
+            variant="underlined"
+            readonly
+          />
+        </VCardTitle>
+        <VCardText>
+          <VContainer>
+            <VRow>
+              <VCol cols="12">
+                <VTextField
+                  v-model="selectedItem.date_do"
+                  label="Дата завершення"
+                  required
+                  type="date"
+                  variant="underlined"
+                  readonly
+                />
+              </VCol>
+
+              <VCol cols="12">
+                <VTextarea
+                  v-model="selectedItem.description"
+                  label="Опис замовлення"
+                  maxlength="1000"
+                  variant="underlined"
+                  auto-grow
+                  rows="1"
+                  row-height="15"
+                  readonly
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextField
+                  v-model="selectedItem.maket_link"
+                  label="Посилання на макет проекту"
+                  required
+                  type="url"
+                  variant="underlined"
+                  readonly
+                />
+              </VCol>
+              <VCol cols="12">
+                <VCombobox
+                  v-model="customer.customerName"
+                  :items="customers"
+                  item-value="customerId"
+                  item-title="name"
+                  label="Ім'я замовника"
+                  variant="underlined"
+                  readonly
                 />
               </VCol>
             </VRow>
@@ -215,31 +557,36 @@ async function deleteTask(item){
           <VBtn
             color="blue-darken-1"
             variant="text"
-            @click="cancelAddTask"
+            @click="info = false; customer.customerName = ''"
           >
             Закрити
-          </VBtn>
-          <VBtn
-            color="blue-darken-1"
-            variant="text"
-            @click="editTask"
-          >
-            Оновити
           </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
   </VRow>
 
+  <VRow>
+    <VCol cols="2">
+      <VBtn
+        dark
+        class="mb-3"
+        @click="addTask"
+      >
+        Додати замовлення
+      </VBtn>
+    </VCol>
+    <VCol cols="2">
+      <VSelect
+        v-model="selectedSortOption"
+        label="Сортувати за: "
+        :items="['Датою', 'Назвою', 'Станом виконання']"
+        @blur="sortTusk(selectedSortOption)"
+      />
+    </VCol>
+  </VRow>
 
 
-  <VBtn
-    dark
-    class="mb-3"
-    @click="addTask"
-  >
-    Додати замовлення
-  </VBtn>
 
   <VRow>
     <VCol>
@@ -250,7 +597,7 @@ async function deleteTask(item){
               Назва замовлення
             </th>
             <th style="text-align: center">
-              Дата замовлення
+              Дата виконання замовлення
             </th>
             <th style="text-align: center">
               Замовник
@@ -265,18 +612,41 @@ async function deleteTask(item){
           <tr
             v-for="(item, index) in tasks"
             :key="index"
+            @click="info = true; selectedItem = item; getName(item.clietn_id)"
           >
             <td style="text-align: center">
               <span> {{ item.name }}</span>
             </td>
             <td style="text-align: center">
-              <span>{{ item.date }}</span>
+              <span>{{ item.date_do }}</span>
             </td>
             <td style="text-align: center">
-              <span> {{ item.clietn_id }} </span>
+              <span> {{ getCustomerName(item.clietn_id) }}</span>
             </td>
             <td style="text-align: center">
-              <span>{{ item.status }}</span>
+              <template v-if="item.status">
+                <VCheckbox
+                  v-model="item.status"
+                  color="success"
+                  hide-details
+                  @change="updateStatus(item)"
+                  @click.stop
+                >
+                  Виконано
+                </VCheckbox>
+              </template>
+              <template v-else>
+                <VCheckbox
+                  v-model="item.status"
+                  style="color: red"
+                  color="error"
+                  hide-details
+                  @change="updateStatus(item)"
+                  @click.stop
+                >
+                  Не виконано
+                </VCheckbox>
+              </template>
             </td>
             <td>
               <VBtn
@@ -289,7 +659,7 @@ async function deleteTask(item){
                 style="margin-right: 2%"
                 icon="mdi-trash-can"
                 size="x-small"
-                @click.stop="deleteTask(item)"
+                @click.stop="admit = true; selectedItem = item"
               />
             </td>
           </tr>
@@ -304,6 +674,23 @@ meta:
   requiresAuth: true
 </route>
 
+<style>
+.custom-text-field input {
+  font-size: 20px!important;
+}
+.custom-text-field label {
+  font-size: 18px!important;
+}
+.v-input__control {
+  display: block;
+  grid-area: control;
+}
+
+.v-input--density-comfortable {
+  --v-input-control-height: 38px;
+  --v-input-padding-top: 9px;
+}
+</style>
 
 https://github.com/KAZAHv2/Diplom-vue3
 https://diplom-5ae23.web.app/
