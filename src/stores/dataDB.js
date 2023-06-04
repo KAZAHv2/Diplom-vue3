@@ -38,11 +38,11 @@ export const DataDB = defineStore({
       console.log(payload)
       await set(ref(db, `/${auth.currentUser.uid}/Customer/` + payload.customerID),
         {
-          name: payload.customerName,
+          name: payload.name,
           customerId : payload.customerID,
-          description: payload.customerDescription,
-          email: payload.customerEmail,
-          phone: payload.customerPhone,
+          description: payload.description,
+          email: payload.email,
+          phone: payload.phone,
         })
         .then(() => {
           console.log("Gotovo")
@@ -116,6 +116,24 @@ export const DataDB = defineStore({
       await remove(ref(db, `/${auth.currentUser.uid}/User_Task/` + payload.taskId))
         .then(() => {
           console.log("Delete")
+        })
+    },
+    async removeCustomer(payload){
+      await remove(ref(db, `/${auth.currentUser.uid}/Customer/` + payload.customerId))
+        .then(() => {
+          console.log("Delete")
+        })
+    },
+    async updateCustomer(payload){
+      await update(ref(db, `/${auth.currentUser.uid}/Customer/` +payload.customerID),
+        {
+          name: payload.name,
+          description: payload.description,
+          email: payload.email,
+          phone: payload.phone,
+        })
+        .then(() => {
+          console.log("Update")
         })
     },
 

@@ -30,10 +30,10 @@ const task = ref({
 })
 
 const customer = ref({
-  customerName:'',
-  customerEmail:'',
-  customerPhone:'',
-  customerDescription:'',
+  name:'',
+  email:'',
+  phone:'',
+  description:'',
   customerID:'',
 })
 
@@ -87,10 +87,10 @@ function cancelAddTask(){
   task.value.maket_link = ''
   task.value.Ldate = ''
 
-  customer.value.customerName = ''
-  customer.value.customerPhone = ''
-  customer.value.customerEmail = ''
-  customer.value.customerDescription = ''
+  customer.value.name = ''
+  customer.value.phone = ''
+  customer.value.email = ''
+  customer.value.description = ''
 }
 
 async function allTask() {
@@ -113,7 +113,7 @@ function udateTask(item){
   task.value.name = item.name
   task.value.description= item.description
   task.value.clietn_id= item.clietn_id
-  customer.value.customerName = getCustomerName(item.clietn_id)
+  customer.value.name = getCustomerName(item.clietn_id)
   task.value.maket_link = item.maket_link
   task.value.Ldate = item.date_do
   task.value. uuid = item.taskId
@@ -180,8 +180,13 @@ function getCustomerName(customerId) {
 }
 
 function getName(customerId){
-  const id = customers.value.find(customer => customer.customerId === customerId)
-  customer.value.customerName = id.name
+
+  if (customers.value.find(customer => customer.customerId === customerId)){
+    const id = customers.value.find(customer => customer.customerId === customerId)
+    customer.value.name = id.name
+  } else {
+    customer.value.name = ''
+  }
   console.log(selectedItem.value)
 }
 
@@ -288,13 +293,13 @@ function sortTusk(){
               </VCol>
               <VCol cols="12">
                 <VCombobox
-                  v-model="customer.customerName"
+                  v-model="customer.name"
                   :items="customers"
                   item-value="customerId"
                   item-title="name"
                   label="Ім'я замовника"
                   variant="underlined"
-                  @blur="handleCustomerSelection(customer.customerName)"
+                  @blur="handleCustomerSelection(customer.name)"
                 />
               </VCol>
 
@@ -307,7 +312,7 @@ function sortTusk(){
 
                 <VCol cols="12">
                   <VTextField
-                    v-model="customer.customerPhone"
+                    v-model="customer.phone"
                     label="Телефон замовника"
                     required
                     variant="underlined"
@@ -316,7 +321,7 @@ function sortTusk(){
 
                 <VCol cols="12">
                   <VTextarea
-                    v-model="customer.customerDescription"
+                    v-model="customer.description"
                     label="Про замовника"
                     maxlength="1000"
                     variant="underlined"
@@ -329,7 +334,7 @@ function sortTusk(){
 
                 <VCol cols="12">
                   <VTextField
-                    v-model="customer.customerEmail"
+                    v-model="customer.email"
                     label="Email замовника"
                     required
                     variant="underlined"
@@ -413,13 +418,13 @@ function sortTusk(){
               </VCol>
               <VCol cols="12">
                 <VCombobox
-                  v-model="customer.customerName"
+                  v-model="customer.name"
                   :items="customers"
                   item-value="customerId"
                   item-title="name"
                   label="Ім'я замовника"
                   variant="underlined"
-                  @blur="handleCustomerSelection(customer.customerName)"
+                  @blur="handleCustomerSelection(customer.name)"
                 />
               </VCol>
 
@@ -432,7 +437,7 @@ function sortTusk(){
 
                 <VCol cols="12">
                   <VTextField
-                    v-model="customer.customerPhone"
+                    v-model="customer.phone"
                     label="Телефон замовника"
                     required
                     variant="underlined"
@@ -441,7 +446,7 @@ function sortTusk(){
 
                 <VCol cols="12">
                   <VTextarea
-                    v-model="customer.customerDescription"
+                    v-model="customer.description"
                     label="Про замовника"
                     maxlength="1000"
                     variant="underlined"
@@ -454,7 +459,7 @@ function sortTusk(){
 
                 <VCol cols="12">
                   <VTextField
-                    v-model="customer.customerEmail"
+                    v-model="customer.email"
                     label="Email замовника"
                     required
                     variant="underlined"
@@ -540,7 +545,7 @@ function sortTusk(){
               </VCol>
               <VCol cols="12">
                 <VCombobox
-                  v-model="customer.customerName"
+                  v-model="customer.name"
                   :items="customers"
                   item-value="customerId"
                   item-title="name"
@@ -557,7 +562,7 @@ function sortTusk(){
           <VBtn
             color="blue-darken-1"
             variant="text"
-            @click="info = false; customer.customerName = ''"
+            @click="info = false; customer.name = ''"
           >
             Закрити
           </VBtn>
