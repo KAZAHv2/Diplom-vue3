@@ -21,6 +21,23 @@ const editCust = ref(false)
 const tasks = ref([])
 const customers = ref([])
 
+const addDiolog = ref(false)
+
+function addTask(){
+  addDiolog.value = true
+}
+const task = ref({
+  uuid : '',
+  name:'',
+  description:'',
+  date:'',
+  Ldate:'',
+  clietn_id:'',
+  maket_link:'',
+  status: false,
+})
+
+
 async function allTask() {
   try {
     tasks.value = Object.values (await dataBase.fetchTasks())
@@ -47,6 +64,7 @@ function getTasksForCustomer(customerId) {
 
   return tasks.value.filter(task => task.clietn_id === customerId)
 }
+
 function clancel(){
   addCustomer.value = false
   editCust.value  = false
@@ -55,6 +73,20 @@ function clancel(){
   customer.value.email = ''
   customer.value.phone = ''
   customer.value.customerID = ''
+}
+
+function cancelAddTask(){
+  addDiolog.value = false
+  task.value.name = ''
+  task.value.description= ''
+  task.value.clietn_id= ''
+  task.value.maket_link = ''
+  task.value.Ldate = ''
+
+  customer.value.name = ''
+  customer.value.phone = ''
+  customer.value.email = ''
+  customer.value.description = ''
 }
 
 function editCustomer(item){
@@ -78,6 +110,31 @@ async function addCust(){
   customer.value.customerID = uuidv4()
   await dataBase.addСustomer(customer.value)
   clancel()
+  await allTask()
+}
+
+function getCurrentDateTime() {
+  const currentDate = new Date()
+
+  const day = String(currentDate.getDate()).padStart(2, '0')
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0')
+  const year = currentDate.getFullYear()
+
+
+  return `${day}.${month}.${year}`
+}
+
+async function createTask() {
+  task.value.date = getCurrentDateTime()
+  task.value.uuid = uuidv4()
+  console.log(task.value)
+
+  
+
+  await dataBase.addTask(task.value)
+
+  cancelAddTask()
+
   await allTask()
 }
 </script>
@@ -260,6 +317,7 @@ async function addCust(){
                         <VBtn
                           icon="mdi-plus"
                           size="x-small"
+                          @click="customer.name = item.name; task.clietn_id = item.customerId; addTask()"
                         />
                       </th>
                     </tr>
@@ -318,6 +376,89 @@ async function addCust(){
       </template>
     </VRow>
   </VContainer>
+
+
+  <VRow justify="center">
+    <VDialog
+      v-model="addDiolog"
+      persistent
+      width="1024"
+    >
+      <VCard>
+        <VCardTitle style="margin-left: 1%; margin-top: 2%">
+          <VTextField
+            v-model="task.name"
+            class="custom-text-field"
+            label="Назва замовлення"
+            required
+            variant="underlined"
+          />
+        </VCardTitle>
+        <VCardText>
+          <VContainer>
+            <VRow>
+              <VCol cols="12">
+                <VTextField
+                  v-model="task.Ldate"
+                  label="Дата завершення"
+                  required
+                  type="date"
+                  variant="underlined"
+                />
+              </VCol>
+
+              <VCol cols="12">
+                <VTextarea
+                  v-model="task.description"
+                  label="Опис замовлення"
+                  maxlength="1000"
+                  variant="underlined"
+                  clearable
+                  auto-grow
+                  rows="1"
+                  row-height="15"
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextField
+                  v-model="task.maket_link"
+                  label="Посилання на макет проекту"
+                  required
+                  type="url"
+                  variant="underlined"
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextField
+                  v-model="customer.name"
+                  label="Ім'я замовника"
+                  required
+                  variant="underlined"
+                />
+              </VCol>
+            </VRow>
+          </VContainer>
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn
+            color="blue-darken-1"
+            variant="text"
+            @click="cancelAddTask"
+          >
+            Закрити
+          </VBtn>
+          <VBtn
+            color="blue-darken-1"
+            variant="text"
+            @click="createTask"
+          >
+            Створити
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+  </VRow>
 </template>
 
 
