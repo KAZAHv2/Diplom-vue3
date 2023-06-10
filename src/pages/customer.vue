@@ -256,7 +256,12 @@ async function addCust(){
                       <th>Назва</th>
                       <th>Дата виконання</th>
                       <th>Стан</th>
-                      <th />
+                      <th>
+                        <VBtn
+                          icon="mdi-plus"
+                          size="x-small"
+                        />
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -291,7 +296,18 @@ async function addCust(){
                           </VCheckbox>
                         </template>
                       </td>
-                      <td />
+                      <td>
+                        <VBtn
+                          icon="mdi-pencil"
+                          size="x-small"
+                          style="margin-right: 2%"
+                        />
+                        <VBtn
+                          style="margin-right: 2%"
+                          icon="mdi-trash-can"
+                          size="x-small"
+                        />
+                      </td>
                     </tr>
                   </tbody>
                 </VTable>

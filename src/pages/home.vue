@@ -573,15 +573,6 @@ function sortTusk(){
 
   <VRow>
     <VCol cols="2">
-      <VBtn
-        dark
-        class="mb-3"
-        @click="addTask"
-      >
-        Додати замовлення
-      </VBtn>
-    </VCol>
-    <VCol cols="2">
       <VSelect
         v-model="selectedSortOption"
         label="Сортувати за: "
@@ -590,7 +581,6 @@ function sortTusk(){
       />
     </VCol>
   </VRow>
-
 
 
   <VRow>
@@ -610,7 +600,13 @@ function sortTusk(){
             <th style="text-align: center">
               Cтан замовлення
             </th>
-            <th />
+            <th>
+              <VBtn
+                icon="mdi-plus"
+                size="x-small"
+                @click="addTask"
+              />
+            </th>
           </tr>
         </thead>
         <tbody>
