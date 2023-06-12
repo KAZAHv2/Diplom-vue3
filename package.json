@@ -29,6 +29,7 @@
         "unplugin-vue-define-options": "^0.6.2",
         "uuid": "^9.0.0",
         "vue": "^3.2.37",
+        "vue-cal": "^4.8.1",
         "vue-chartjs": "^4.1.1",
         "vue-drag-n-drop": "^1.3.0",
         "vue-flatpickr-component": "9.0.6",
