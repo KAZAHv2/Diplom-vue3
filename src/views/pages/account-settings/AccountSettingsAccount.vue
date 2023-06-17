@@ -110,10 +110,7 @@ const changeEmail = (async () => {
           <VRow>
             <p class="text-body-1 mb-0">
               Iм'я: {{ userData.name }}
-            </p>
-          </VRow>
-          <VRow>
-            <p class="text-body-1 mb-0">
+              <br>
               Пошта: {{ userData.email }}
             </p>
           </VRow>

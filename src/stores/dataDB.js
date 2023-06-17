@@ -49,6 +49,36 @@ export const DataDB = defineStore({
         })
     },
 
+    async addCategory(payload){
+      console.log(payload)
+      await set(ref(db, `/${auth.currentUser.uid}/Category/` + payload.categoryId),
+        {
+          name: payload.name,
+          categoryId : payload.categoryId,
+        })
+        .then(() => {
+          console.log("Gotovo")
+        })
+    },
+
+    async fetchCategory() {
+      const dbRef = ref(db)
+      try {
+        const snapshot = await get(child(dbRef, `/${auth.currentUser.uid}/Category/`))
+        if (snapshot.exists()) {
+          return snapshot.val()
+        } else {
+          console.log("No data available")
+
+          return null
+        }
+      } catch (error) {
+        console.error(error)
+
+        return null
+      }
+    },
+
     async fetchTasks() {
       const dbRef = ref(db)
       try {

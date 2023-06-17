@@ -2,18 +2,23 @@
 import { auth, db, useUserStore } from '@/stores/user'
 import {DataDB} from '@/stores/dataDB'
 import {v4 as uuidv4} from 'uuid'
+import { Icon } from '@iconify/vue'
 const dataBase = DataDB()
 const tasks = ref({})
 const customers = ref([])
+const categories = ref([])
+
+const newCategory = ref({
+  categoryId: '',
+  name: '',
+})
 onMounted( async () => {
   await allTask()
-  sortTusk()
 })
 
-
+const category = ref(false)
 const info = ref(false)
 const selectedItem = ref()
-const selectedSortOption = ref('Станом виконання')
 const admit = ref(false)
 const addDiolog = ref(false)
 const updateDiolog = ref(false)
@@ -44,7 +49,6 @@ function getCurrentDateTime() {
   const day = String(currentDate.getDate()).padStart(2, '0')
   const month = String(currentDate.getMonth() + 1).padStart(2, '0')
   const year = currentDate.getFullYear()
-
 
   return `${day}.${month}.${year}`
 }
@@ -96,15 +100,16 @@ function cancelAddTask(){
 async function allTask() {
   try {
     tasks.value = Object.values (await dataBase.fetchTasks())
-    console.log(tasks.value)
+
     customers.value = Object.values(await dataBase.fetchCustomers())
-    console.log(customers.value)
+
+    categories.value = Object.values (await dataBase.fetchCategory())
+    console.log(categories.value)
 
   } catch (error) {
     console.error(error)
 
   }
-  sortTusk()
 }
 
 function udateTask(item){
@@ -194,16 +199,15 @@ async function updateStatus(item){
   await dataBase.updateStatus(item)
 }
 
-function sortTusk(){
+async function createCategory(){
+  newCategory.value.categoryId = uuidv4()
 
-  if (selectedSortOption.value === 'Датою') {
-    tasks.value.sort((a, b) => new Date(a.date) - new Date(b.date))
-  } else if (selectedSortOption.value === 'Назвою') {
-    tasks.value.sort((a, b) => a.name.localeCompare(b.name))
-  } else if (selectedSortOption.value === 'Станом виконання') {
-    tasks.value.sort((a, b) => a.status - b.status)
-  }
-  
+  await dataBase.addCategory(newCategory.value)
+
+  newCategory.value.name = '',
+  newCategory.value.categoryId = ''
+
+  await allTask()
 }
 </script>
 
@@ -572,18 +576,6 @@ function sortTusk(){
   </VRow>
 
   <VRow>
-    <VCol cols="2">
-      <VSelect
-        v-model="selectedSortOption"
-        label="Сортувати за: "
-        :items="['Датою', 'Назвою', 'Станом виконання']"
-        @blur="sortTusk(selectedSortOption)"
-      />
-    </VCol>
-  </VRow>
-
-
-  <VRow>
     <VCol>
       <VTable>
         <thead>
@@ -668,6 +660,115 @@ function sortTusk(){
       </VTable>
     </VCol>
   </VRow>
+
+  <VContainer class="pa-4">
+    <VRow
+      class="fill-height"
+      align="center"
+      justify="center"
+    >
+      <template
+        v-for="(item, index) in categories"
+        :key="index"
+      >
+        <VCol
+          cols="12"
+          xl='2'
+          lg='4'
+          sm="6"
+          xs="12"
+        >
+          <VHover v-slot="{ isHovering, props }">
+            <VCard
+              :elevation="isHovering ? 12 : 2"
+              :class="{ 'on-hover': isHovering }"
+              v-bind="props"
+            >
+              <VCardTitle class="text-h6 d-flex flex-column">
+                <div class="d-flex justify-space-between">
+                  <div class="text-center flex-grow-1">
+                    <h1  class="mt-4">
+                      {{ item.name }}
+                    </h1>
+                  </div>
+                </div>
+              </VCardTitle>
+              <VCardActions class="justify-center flex-column">
+                <VBtn>Перейменувати</VBtn>
+                <VBtn class='mr-2' >Видалити</VBtn>
+              </VCardActions>
+            </VCard>
+          </VHover>
+        </VCol>
+      </template>
+      <VCol
+        cols="12"
+        md="2"
+        sm="6"
+        xs="12"
+        @click="category = true"
+      >
+        <VHover v-slot="{ isHovering, props }">
+          <VCard
+            :elevation="isHovering ? 12 : 2"
+            :class="{ 'on-hover': isHovering }"
+            v-bind="props"
+          >
+            <div>
+              <VIcon
+                icon="mdi-plus"
+                size="30%"
+                style="margin-left: 35%"
+              />
+            </div>
+            <div class="text-center flex-grow-1 text-h6 d-flex flex-column">
+              <p> Створити <br> категорію</p>
+            </div>
+          </VCard>
+        </VHover>
+      </VCol>
+    </VRow>
+  </VContainer>
+
+
+  <VDialog
+    v-model="category"
+    max-width="400"
+  >
+    <VCard>
+      <VCardTitle>
+        Нова категорія
+      </VCardTitle>
+      <VCardText>
+        <VCol cols="12">
+          <VTextField
+            v-model="newCategory.name"
+            label="Назва категорії"
+            required
+            variant="underlined"
+          />
+        </VCol>
+      </VCardText>
+
+      <VCardActions>
+        <VBtn
+          color="green darken-1"
+          text
+          @click="category = false"
+        >
+          Відмінити
+        </VBtn>
+
+        <VBtn
+          color="green darken-1"
+          text
+          @click="createCategory(); category = false"
+        >
+          Створити
+        </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
 </template>
 
 <route lang="yaml">
