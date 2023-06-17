@@ -7,7 +7,7 @@ const dataBase = DataDB()
 const tasks = ref({})
 const customers = ref([])
 const categories = ref([])
-
+const show = ref(false)
 const newCategory = ref({
   categoryId: '',
   name: '',
@@ -677,6 +677,7 @@ async function createCategory(){
           lg='4'
           sm="6"
           xs="12"
+          @click='show = true'
         >
           <VHover v-slot="{ isHovering, props }">
             <VCard
@@ -729,6 +730,35 @@ async function createCategory(){
       </VCol>
     </VRow>
   </VContainer>
+
+
+  <VDialog
+    v-model="show"
+    max-width="400"
+  >
+    <VCard>
+      <VCardTitle>
+        Нова категорія
+      </VCardTitle>
+      <VCardText>
+
+      </VCardText>
+
+      <VCardActions>
+        <v-spacer></v-spacer>
+        <VBtn
+          color="green darken-1"
+          text
+          @click="show = false"
+        >
+          Закрити
+        </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
+
+
+
 
 
   <VDialog
