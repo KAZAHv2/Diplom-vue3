@@ -4,18 +4,32 @@ import {DataDB} from '@/stores/dataDB'
 import {v4 as uuidv4} from 'uuid'
 import { Icon } from '@iconify/vue'
 const dataBase = DataDB()
-const tasks = ref({})
+const tasks = ref([])
 const customers = ref([])
 const categories = ref([])
 const show = ref(false)
+const upCategory = ref(false)
 const newCategory = ref({
   categoryId: '',
   name: '',
 })
+
+
+const rulesUser = ref({
+  emailRules: [
+    v => !!v || "Пошта обов'язкова",
+    v => /.+@.+/.test(v) || 'Некоректний запис пошти',
+  ],
+})
+
+const searchTerm = ref('')
+
 onMounted( async () => {
   await allTask()
 })
 
+const sortByColumn = ref('')
+const sortDirection = ref('asc')
 const category = ref(false)
 const info = ref(false)
 const selectedItem = ref()
@@ -30,7 +44,10 @@ const task = ref({
   date:'',
   Ldate:'',
   clietn_id:'',
+  client_name:'',
   maket_link:'',
+  category_id:'',
+  category_name:'',
   status: false,
 })
 
@@ -56,10 +73,13 @@ function getCurrentDateTime() {
 function addTask(){
   addDiolog.value = true
 }
+
 async function createTask() {
   customer.value.customerID = uuidv4()
   task.value.date = getCurrentDateTime()
   task.value.uuid = uuidv4()
+  task.value.category_name = newCategory.value.name
+  task.value.category_id = newCategory.value.categoryId
   console.log(task.value)
 
   console.log(customer.value)
@@ -68,11 +88,13 @@ async function createTask() {
     console.log('lox')
     console.log(customer.value)
 
+    task.value.client_name = customer.value.name
     await dataBase.addTask(task.value)
     cancelAddTask()
   } else {
     console.log('ne lox')
     task.value.clietn_id = customer.value.customerID
+    task.value.client_name = customer.value.name
 
     await dataBase.addTask(task.value)
     await dataBase.addСustomer(customer.value)
@@ -82,6 +104,7 @@ async function createTask() {
   showCustomerFields.value = false
   await allTask()
 }
+
 function cancelAddTask(){
   showCustomerFields.value = false
   addDiolog.value = false
@@ -90,6 +113,9 @@ function cancelAddTask(){
   task.value.clietn_id= ''
   task.value.maket_link = ''
   task.value.Ldate = ''
+  task.value.client_name = ''
+  task.value.category_name = ''
+  task.value.category_id = ''
 
   customer.value.name = ''
   customer.value.phone = ''
@@ -99,12 +125,11 @@ function cancelAddTask(){
 
 async function allTask() {
   try {
-    tasks.value = Object.values (await dataBase.fetchTasks())
-
     customers.value = Object.values(await dataBase.fetchCustomers())
 
     categories.value = Object.values (await dataBase.fetchCategory())
-    console.log(categories.value)
+
+    tasks.value = getObjectsByCategoryId(newCategory.value.categoryId)
 
   } catch (error) {
     console.error(error)
@@ -122,6 +147,9 @@ function udateTask(item){
   task.value.maket_link = item.maket_link
   task.value.Ldate = item.date_do
   task.value. uuid = item.taskId
+  task.value.client_name = customer.value.name
+  task.value.category_name = newCategory.value.name
+  task.value.category_id = newCategory.value.categoryId
 }
 
 async function edit(){
@@ -159,6 +187,19 @@ async function deleteTask(){
   await allTask()
 }
 
+async function updateCategory(){
+  
+  await dataBase.updateCategory(newCategory.value)
+  newCategory.value.categoryId = ''
+  newCategory.value.name = ''
+  await allTask()
+}
+
+async function deleteCategory(item){
+
+  await dataBase.removeCategory(item)
+  await allTask()
+}
 
 function  handleCustomerSelection(name) {
   console.log(customers.value)
@@ -208,6 +249,73 @@ async function createCategory(){
   newCategory.value.categoryId = ''
 
   await allTask()
+}
+
+const filteredData = computed(() => {
+  const found = tasks.value
+
+  if (!searchTerm.value) {
+    return found
+  }
+
+  return found.filter(item => {
+    // Применение фильтрации на основе поискового запроса
+    return Object.values(item).some(value =>
+      String(value).toLowerCase().includes(searchTerm.value.toLowerCase()),
+    )
+  })
+})
+
+
+function sortedData(){
+  if (sortByColumn.value) {
+    tasks.value.sort((a, b) => {
+      const modifier =  sortDirection.value === 'asc' ? 1 : -1
+      if (a[sortByColumn.value] < b[sortByColumn.value]) return -1 * modifier
+      if (a[sortByColumn.value] > b[sortByColumn.value]) return 1 * modifier
+      
+      return 0
+    })
+  }
+
+  return  tasks.value
+}
+
+function sortBy(column) {
+  console.log(column)
+  if (column === sortByColumn.value) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortByColumn.value = column
+    sortDirection.value = 'asc'
+  }
+  sortedData()
+}
+
+function getObjectsByCategoryId(categoryId) {
+  const objects = []
+
+  // Перебираем все свойства в data
+  for (const key in categories.value) {
+    if (categories.value.hasOwnProperty(key)) {
+      const obj = categories.value[key]
+
+      // Проверяем, содержит ли User_Task нужный category_id
+      if (obj.User_Task) {
+        const userTasks = obj.User_Task
+        for (const taskId in userTasks) {
+          if (userTasks.hasOwnProperty(taskId)) {
+            const task = userTasks[taskId]
+            if (task.category_id === categoryId) {
+              objects.push(task)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return objects
 }
 </script>
 
@@ -342,6 +450,7 @@ async function createCategory(){
                     label="Email замовника"
                     required
                     variant="underlined"
+                    :rules="rulesUser.emailRules"
                   />
                 </VCol>
               </VCol>
@@ -467,6 +576,7 @@ async function createCategory(){
                     label="Email замовника"
                     required
                     variant="underlined"
+                    :rules="rulesUser.emailRules"
                   />
                 </VCol>
               </VCol>
@@ -575,92 +685,6 @@ async function createCategory(){
     </VDialog>
   </VRow>
 
-  <VRow>
-    <VCol>
-      <VTable>
-        <thead>
-          <tr>
-            <th style="text-align: center">
-              Назва замовлення
-            </th>
-            <th style="text-align: center">
-              Дата виконання замовлення
-            </th>
-            <th style="text-align: center">
-              Замовник
-            </th>
-            <th style="text-align: center">
-              Cтан замовлення
-            </th>
-            <th>
-              <VBtn
-                icon="mdi-plus"
-                size="x-small"
-                @click="addTask"
-              />
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="(item, index) in tasks"
-            :key="index"
-            @click="info = true; selectedItem = item; getName(item.clietn_id)"
-          >
-            <td style="text-align: center">
-              <span> {{ item.name }}</span>
-            </td>
-            <td style="text-align: center">
-              <span>{{ item.date_do }}</span>
-            </td>
-            <td style="text-align: center">
-              <span> {{ getCustomerName(item.clietn_id) }}</span>
-            </td>
-            <td style="text-align: center">
-              <template v-if="item.status">
-                <VCheckbox
-                  v-model="item.status"
-                  color="success"
-                  hide-details
-                  @change="updateStatus(item)"
-                  @click.stop
-                >
-                  Виконано
-                </VCheckbox>
-              </template>
-              <template v-else>
-                <VCheckbox
-                  v-model="item.status"
-                  style="color: red"
-                  color="error"
-                  hide-details
-                  @change="updateStatus(item)"
-                  @click.stop
-                >
-                  Не виконано
-                </VCheckbox>
-              </template>
-            </td>
-            <td>
-              <VBtn
-                icon="mdi-pencil"
-                size="x-small"
-                style="margin-right: 2%"
-                @click.stop="udateTask(item)"
-              />
-              <VBtn
-                style="margin-right: 2%"
-                icon="mdi-trash-can"
-                size="x-small"
-                @click.stop="admit = true; selectedItem = item"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </VTable>
-    </VCol>
-  </VRow>
-
   <VContainer class="pa-4">
     <VRow
       class="fill-height"
@@ -673,11 +697,14 @@ async function createCategory(){
       >
         <VCol
           cols="12"
-          xl='2'
-          lg='4'
+          xl="2"
+          lg="4"
           sm="6"
           xs="12"
-          @click='show = true'
+          @click="show = true;
+                  newCategory.name = item.name;
+                  newCategory.categoryId = item.categoryId;
+                  tasks = getObjectsByCategoryId(newCategory.categoryId)"
         >
           <VHover v-slot="{ isHovering, props }">
             <VCard
@@ -688,15 +715,26 @@ async function createCategory(){
               <VCardTitle class="text-h6 d-flex flex-column">
                 <div class="d-flex justify-space-between">
                   <div class="text-center flex-grow-1">
-                    <h1  class="mt-4">
+                    <h1 class="mt-4">
                       {{ item.name }}
                     </h1>
                   </div>
                 </div>
               </VCardTitle>
               <VCardActions class="justify-center flex-column">
-                <VBtn>Перейменувати</VBtn>
-                <VBtn class='mr-2' >Видалити</VBtn>
+                <VBtn
+                  @click.stop="
+                    upCategory = true;
+                    newCategory.categoryId = item.categoryId"
+                >
+                  Перейменувати
+                </VBtn>
+                <VBtn
+                  class="mr-2"
+                  @click.stop=" deleteCategory(item.categoryId) "
+                >
+                  Видалити
+                </VBtn>
               </VCardActions>
             </VCard>
           </VHover>
@@ -734,22 +772,128 @@ async function createCategory(){
 
   <VDialog
     v-model="show"
-    max-width="400"
+    persistent
+    max-width="1000"
   >
     <VCard>
       <VCardTitle>
-        Нова категорія
+        <h1 style="text-align: center">
+          {{ newCategory.name }}
+        </h1>
       </VCardTitle>
       <VCardText>
-
+        <VRow>
+          <VCol>
+            <VTextField
+              v-model="searchTerm"
+              append-icon="mdi-magnify"
+              label="Пошук по замовленням"
+              single-line
+              hide-details
+              variant="underlined"
+            />
+            <VTable>
+              <thead>
+                <tr>
+                  <th
+                    style="text-align: center"
+                    @click="sortBy('name')"
+                  >
+                    Назва замовлення
+                  </th>
+                  <th
+                    style="text-align: center"
+                    @click="sortBy('date_do')"
+                  >
+                    Дата виконання замовлення
+                  </th>
+                  <th
+                    style="text-align: center"
+                    @click="sortBy('client_name')"
+                  >
+                    Замовник
+                  </th>
+                  <th
+                    style="text-align: center"
+                    @click="sortBy('status')"
+                  >
+                    Cтан замовлення
+                  </th>
+                  <th>
+                    <VBtn
+                      icon="mdi-plus"
+                      size="x-small"
+                      @click="addTask"
+                    />
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(item, index) in filteredData"
+                  :key="index"
+                  @click="info = true; selectedItem = item; getName(item.clietn_id)"
+                >
+                  <td style="text-align: center">
+                    <span> {{ item.name }}</span>
+                  </td>
+                  <td style="text-align: center">
+                    <span>{{ item.date_do }}</span>
+                  </td>
+                  <td style="text-align: center">
+                    <span> {{ getCustomerName(item.clietn_id) }}</span>
+                  </td>
+                  <td style="text-align: center">
+                    <template v-if="item.status">
+                      <VCheckbox
+                        v-model="item.status"
+                        color="success"
+                        hide-details
+                        @change="updateStatus(item)"
+                        @click.stop
+                      >
+                        Виконано
+                      </VCheckbox>
+                    </template>
+                    <template v-else>
+                      <VCheckbox
+                        v-model="item.status"
+                        style="color: red"
+                        color="error"
+                        hide-details
+                        @change="updateStatus(item)"
+                        @click.stop
+                      >
+                        Не виконано
+                      </VCheckbox>
+                    </template>
+                  </td>
+                  <td>
+                    <VBtn
+                      icon="mdi-pencil"
+                      size="x-small"
+                      style="margin-right: 2%"
+                      @click.stop="udateTask(item)"
+                    />
+                    <VBtn
+                      style="margin-right: 2%"
+                      icon="mdi-trash-can"
+                      size="x-small"
+                      @click.stop="admit = true; selectedItem = item"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </VTable>
+          </VCol>
+        </VRow>
       </VCardText>
-
       <VCardActions>
-        <v-spacer></v-spacer>
+        <VSpacer />
         <VBtn
           color="green darken-1"
           text
-          @click="show = false"
+          @click="show = false; newCategory.name = ''"
         >
           Закрити
         </VBtn>
@@ -763,6 +907,7 @@ async function createCategory(){
 
   <VDialog
     v-model="category"
+    persistent
     max-width="400"
   >
     <VCard>
@@ -795,6 +940,48 @@ async function createCategory(){
           @click="createCategory(); category = false"
         >
           Створити
+        </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
+
+
+
+  <VDialog
+    v-model="upCategory"
+    persistent
+    max-width="400"
+  >
+    <VCard>
+      <VCardTitle>
+        Введіть нову назву
+      </VCardTitle>
+      <VCardText>
+        <VCol cols="12">
+          <VTextField
+            v-model="newCategory.name"
+            label="Назва категорії"
+            required
+            variant="underlined"
+          />
+        </VCol>
+      </VCardText>
+
+      <VCardActions>
+        <VBtn
+          color="green darken-1"
+          text
+          @click="upCategory = false"
+        >
+          Відмінити
+        </VBtn>
+
+        <VBtn
+          color="green darken-1"
+          text
+          @click="updateCategory(); upCategory = false"
+        >
+          Змінити
         </VBtn>
       </VCardActions>
     </VCard>

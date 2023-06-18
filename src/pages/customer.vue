@@ -7,6 +7,21 @@ onMounted( async () => {
   await allTask()
 })
 
+const rulesUser = ref({
+  emailRules: [
+    v => !!v || "Пошта обов'язкова",
+    v => /.+@.+/.test(v) || 'Некоректний запис пошти',
+  ],
+})
+
+const newCategory = ref({
+  categoryId: '',
+  name: '',
+})
+
+const sortByColumn = ref('')
+const sortDirection = ref('asc')
+
 const admit = ref(false)
 const customer = ref({
   name:'',
@@ -30,6 +45,8 @@ const addDiolog = ref(false)
 
 const updateDiolog = ref(false)
 
+const categories = ref([])
+
 function addTask(){
   addDiolog.value = true
 }
@@ -40,17 +57,24 @@ const task = ref({
   date:'',
   Ldate:'',
   clietn_id:'',
+  client_name:'',
   maket_link:'',
+  category_id:'',
+  category_name:'',
   status: false,
 })
+const info = ref(false)
 const selectedItem = ref()
 
 async function allTask() {
   try {
-    tasks.value = Object.values (await dataBase.fetchTasks())
-    console.log(tasks.value)
+
     customers.value = Object.values(await dataBase.fetchCustomers())
-    console.log(customers.value)
+ 
+    categories.value = Object.values (await dataBase.fetchCategory())
+
+    tasks.value = Object.values(categories.value)
+      .flatMap(obj => obj.User_Task ? Object.values(obj.User_Task) : [])
 
   } catch (error) {
     console.error(error)
@@ -65,11 +89,6 @@ async function deleteCustomer(item){
 
 async function updateStatus(item){
   await dataBase.updateStatus(item)
-}
-
-function getTasksForCustomer(customerId) {
-
-  return tasks.value.filter(task => task.clietn_id === customerId)
 }
 
 function getCustomerName(customerId) {
@@ -107,6 +126,8 @@ function cancelAddTask(){
   task.value.clietn_id= ''
   task.value.maket_link = ''
   task.value.Ldate = ''
+  task.value.category_name = ''
+  task.value.category_id = ''
 
   customer.value.name = ''
   customer.value.phone = ''
@@ -156,16 +177,50 @@ async function deleteTask(){
 async function createTask() {
   task.value.date = getCurrentDateTime()
   task.value.uuid = uuidv4()
+  task.value.client_name = customer.value.name
   console.log(task.value)
 
-  
+  if (findCategoryIdByCategoryName(task.value.category_name) === null){
 
-  await dataBase.addTask(task.value)
+    newCategory.value.name = task.value.category_name
+    newCategory.value.categoryId = uuidv4()
+    task.value.category_id = newCategory.value.categoryId
 
-  cancelAddTask()
+    console.log(newCategory.value)
 
-  await allTask()
+    console.log(task.value)
+    console.log('НЕЕЕЕ')
+    
+    await dataBase.addCategory(newCategory.value)
+
+    await dataBase.addTask(task.value)
+
+    cancelAddTask()
+
+    await allTask()
+    newCategory.value.name = ''
+    newCategory.value.categoryId = ''
+
+  }else {
+    task.value.category_id = findCategoryIdByCategoryName(task.value.category_name)
+    console.log("ДААААА")
+    console.log(newCategory.value)
+    console.log(task.value)
+
+    await dataBase.addTask(task.value)
+
+    cancelAddTask()
+
+    await allTask()
+  }
 }
+
+function findCategoryIdByCategoryName(categoryName) {
+  const foundCategory = categories.value.find(category => category.name === categoryName)
+
+  return foundCategory ? foundCategory.categoryId : null
+}
+
 function clancelTask(){
   updateDiolog.value = false
   cancelAddTask()
@@ -210,23 +265,129 @@ function  handleCustomerSelection(name) {
     }
   }
 }
+
+function getName(customerId){
+
+  if (customers.value.find(customer => customer.customerId === customerId)){
+    const id = customers.value.find(customer => customer.customerId === customerId)
+    customer.value.name = id.name
+  } else {
+    customer.value.name = ''
+  }
+  console.log(selectedItem.value)
+}
+
+function getTasksForCustomer(customerId) {
+
+  return tasks.value.filter(task => task.clietn_id === customerId)
+}
+
+function sortedData(){
+  if (sortByColumn.value) {
+    tasks.value.sort((a, b) => {
+      const modifier =  sortDirection.value === 'asc' ? 1 : -1
+      if (a[sortByColumn.value] < b[sortByColumn.value]) return -1 * modifier
+      if (a[sortByColumn.value] > b[sortByColumn.value]) return 1 * modifier
+
+      return 0
+    })
+  }
+
+  return  tasks.value
+}
+
+function sortBy(column) {
+  console.log(column)
+  if (column === sortByColumn.value) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortByColumn.value = column
+    sortDirection.value = 'asc'
+  }
+  sortedData()
+}
 </script>
 
 
 <template>
-  <VRow>
-    <VCol cols="2">
-      <VBtn
-        dark
-        class="mb-3"
-        @click="addCustomer = true; editCust = true"
-      >
-        Додати клієнта
-      </VBtn>
-    </VCol>
+  <VRow justify="center">
+    <VDialog
+      v-model="info"
+      persistent
+      width="1024"
+    >
+      <VCard>
+        <VCardTitle style="margin-left: 1%; margin-top: 2%">
+          <VTextField
+            v-model="selectedItem.name"
+            class="custom-text-field"
+            label="Назва замовлення"
+            required
+            variant="underlined"
+            readonly
+          />
+        </VCardTitle>
+        <VCardText>
+          <VContainer>
+            <VRow>
+              <VCol cols="12">
+                <VTextField
+                  v-model="selectedItem.category_name"
+                  label="Категорія"
+                  required
+                  variant="underlined"
+                  readonly
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextField
+                  v-model="selectedItem.date_do"
+                  label="Дата завершення"
+                  required
+                  type="date"
+                  variant="underlined"
+                  readonly
+                />
+              </VCol>
+
+              <VCol cols="12">
+                <VTextarea
+                  v-model="selectedItem.description"
+                  label="Опис замовлення"
+                  maxlength="1000"
+                  variant="underlined"
+                  auto-grow
+                  rows="1"
+                  row-height="15"
+                  readonly
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextField
+                  v-model="selectedItem.maket_link"
+                  label="Посилання на макет проекту"
+                  required
+                  type="url"
+                  variant="underlined"
+                  readonly
+                />
+              </VCol>
+            </VRow>
+          </VContainer>
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn
+            color="blue-darken-1"
+            variant="text"
+            @click="info = false; customer.name = ''"
+          >
+            Закрити
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </VRow>
-
-
 
   <VRow justify="center">
     <VDialog
@@ -273,6 +434,7 @@ function  handleCustomerSelection(name) {
                     label="Email замовника"
                     required
                     variant="underlined"
+                    :rules="rulesUser.emailRules"
                   />
                 </VCol>
               </VCol>
@@ -327,7 +489,9 @@ function  handleCustomerSelection(name) {
       >
         <VCol
           cols="12"
-          md="4"
+          xl="4"
+          lg="6"
+          sm="12"
         >
           <VHover v-slot="{ isHovering, props }">
             <VCard
@@ -383,9 +547,15 @@ function  handleCustomerSelection(name) {
                 <VTable>
                   <thead>
                     <tr>
-                      <th>Назва</th>
-                      <th>Дата виконання</th>
-                      <th>Стан</th>
+                      <th @click="sortBy('name')">
+                        Назва
+                      </th>
+                      <th @click="sortBy('date_do')">
+                        Дата виконання
+                      </th>
+                      <th @click="sortBy('status')">
+                        Стан
+                      </th>
                       <th>
                         <VBtn
                           icon="mdi-plus"
@@ -399,6 +569,7 @@ function  handleCustomerSelection(name) {
                     <tr
                       v-for="(task, taskIndex) in getTasksForCustomer(item.customerId)"
                       :key="taskIndex"
+                      @click="info = true; selectedItem = task; getName(item.clietn_id)"
                     >
                       <td>{{ task.name }}</td>
                       <td>{{ task.date_do }}</td>
@@ -449,6 +620,32 @@ function  handleCustomerSelection(name) {
           </VHover>
         </VCol>
       </template>
+      <VCol
+        cols="12"
+        md="2"
+        sm="6"
+        xs="12"
+        @click="addCustomer = true; editCust = true"
+      >
+        <VHover v-slot="{ isHovering, props }">
+          <VCard
+            :elevation="isHovering ? 12 : 2"
+            :class="{ 'on-hover': isHovering }"
+            v-bind="props"
+          >
+            <div>
+              <VIcon
+                icon="mdi-plus"
+                size="50%"
+                style="margin-left: 25%"
+              />
+            </div>
+            <div class="text-center flex-grow-1 text-h6 d-flex flex-column">
+              <p> Додати <br> клієнта</p>
+            </div>
+          </VCard>
+        </VHover>
+      </VCol>
     </VRow>
   </VContainer>
 
@@ -472,6 +669,17 @@ function  handleCustomerSelection(name) {
         <VCardText>
           <VContainer>
             <VRow>
+              <VCol cols="12">
+                <VCombobox
+                  v-model="task.category_name"
+                  :items="categories"
+                  item-value="categoryId"
+                  item-title="name"
+                  label="Категорія"
+                  required
+                  variant="underlined"
+                />
+              </VCol>
               <VCol cols="12">
                 <VTextField
                   v-model="task.Ldate"
@@ -511,7 +719,6 @@ function  handleCustomerSelection(name) {
                   variant="underlined"
                 />
               </VCol>
-
             </VRow>
           </VContainer>
         </VCardText>
@@ -633,6 +840,7 @@ function  handleCustomerSelection(name) {
                     label="Email замовника"
                     required
                     variant="underlined"
+                    :rules="rulesUser.emailRules"
                   />
                 </VCol>
               </VCol>

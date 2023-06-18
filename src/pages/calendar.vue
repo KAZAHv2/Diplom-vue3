@@ -25,7 +25,7 @@ onMounted( async () => {
   console.log(event.value)
 })
 
-
+const categories = ref([])
 const tasks = ref([])
 const event = ref([])
 
@@ -33,37 +33,19 @@ const customers = ref([])
 
 async function allTask() {
   try {
-    tasks.value = Object.values (await dataBase.fetchTasks())
-    console.log(tasks.value)
+    categories.value = Object.values (await dataBase.fetchCategory())
+
+    tasks.value = Object.values(categories.value)
+      .flatMap(obj => obj.User_Task ? Object.values(obj.User_Task) : [])
+
     customers.value = Object.values(await dataBase.fetchCustomers())
-    console.log(customers.value)
+
 
   } catch (error) {
     console.error(error)
 
   }
 }
-
-const events = ref (
-  [
-    {
-      start: '2018-11-20 ',
-      end: '2018-11-20 ',
-      title: 'Need to go shopping',
-      icon: 'shopping_cart', // Custom attribute.
-      class: 'leisure',
-      content: 'o;jrtnjkghp9rojhmrtjhrt9;g tryjprtiowhyp;t trkyopj rtoi', // Optional.
-    },
-    {
-      start: '2018-11-22 ',
-      end: '2018-11-22 ',
-      title: 'Golf with John',
-      icon: 'golf_course', // Custom attribute.
-      class: 'sport',
-      content: 'ygfutyujsrfthjtgyfjt6yrjjghjghjuolt tujtygurtyu', // Optional.
-    },
-  ],
-)
 
 function sortArr(){
   event.value = tasks.value.map(function(oldObj) {

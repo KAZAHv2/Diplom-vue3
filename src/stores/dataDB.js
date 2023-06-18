@@ -18,7 +18,7 @@ export const DataDB = defineStore({
 
     async addTask(payload){
       console.log(payload)
-      await set(ref(db, `/${auth.currentUser.uid}/User_Task/` + payload.uuid),
+      await set(ref(db, `/${auth.currentUser.uid}/Category/` + payload.category_id + `/User_Task/` + payload.uuid),
         {
           name: payload.name,
           taskId : payload.uuid,
@@ -27,6 +27,9 @@ export const DataDB = defineStore({
           date_do: payload.Ldate,
           clietn_id: payload.clietn_id,
           maket_link: payload.maket_link,
+          client_name: payload.client_name,
+          category_name:  payload.category_name,
+          category_id:  payload.category_id,
           status: false,
         })
         .then(() => {
@@ -58,6 +61,16 @@ export const DataDB = defineStore({
         })
         .then(() => {
           console.log("Gotovo")
+        })
+    },
+
+    async updateCategory(payload){
+      await update(ref(db, `/${auth.currentUser.uid}/Category/` + payload.categoryId),
+        {
+          name: payload.name,
+        })
+        .then(() => {
+          console.log("Update")
         })
     },
 
@@ -118,13 +131,17 @@ export const DataDB = defineStore({
 
 
     async updateTask(payload){
-      await update(ref(db, `/${auth.currentUser.uid}/User_Task/` + payload.uuid),
+      console.log(payload)
+      await update(ref(db, `/${auth.currentUser.uid}/Category/` + payload.category_id + `/User_Task/` + payload.uuid),
         {
           name: payload.name,
           description: payload.description,
           date_do: payload.Ldate,
           clietn_id: payload.clietn_id,
           maket_link: payload.maket_link,
+          client_name: payload.client_name,
+          category_name:  payload.category_name,
+          category_id:  payload.category_id,
         })
         .then(() => {
           console.log("Update")
@@ -132,7 +149,7 @@ export const DataDB = defineStore({
     },
 
     async updateStatus(payload){
-      await update(ref(db, `/${auth.currentUser.uid}/User_Task/` + payload.taskId),
+      await update(ref(db, `/${auth.currentUser.uid}/Category/` + payload.category_id + `/User_Task/` + payload.taskId),
         {
           status: payload.status,
         })
@@ -143,13 +160,19 @@ export const DataDB = defineStore({
 
 
     async removeTask(payload){
-      await remove(ref(db, `/${auth.currentUser.uid}/User_Task/` + payload.taskId))
+      await remove(ref(db, `/${auth.currentUser.uid}/Category/` + payload.category_id + `/User_Task/` + payload.taskId))
         .then(() => {
           console.log("Delete")
         })
     },
     async removeCustomer(payload){
       await remove(ref(db, `/${auth.currentUser.uid}/Customer/` + payload.customerId))
+        .then(() => {
+          console.log("Delete")
+        })
+    },
+    async removeCategory(payload){
+      await remove(ref(db, `/${auth.currentUser.uid}/Category/` + payload))
         .then(() => {
           console.log("Delete")
         })
