@@ -4,8 +4,6 @@ import { useUserStore, auth } from '@/stores/user'
 const userStore = useUserStore()
 onMounted( async () => {
   await userStore.fetchUserData()
-  console.log(userStore.fetchUserData())
-  console.log(userStore.getUserData)
 
 })
 const userData = computed(() => userStore.getUserData)

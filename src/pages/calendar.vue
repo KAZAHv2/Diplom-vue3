@@ -19,10 +19,7 @@ const showAllDayEvents = ref(0)
 const shortEventsOnMonthView = ref( false)
 onMounted( async () => {
   await allTask()
-  console.log(tasks.value)
-  console.log(customers.value)
   sortArr()
-  console.log(event.value)
 })
 
 const categories = ref([])
@@ -50,11 +47,13 @@ async function allTask() {
 function sortArr(){
   event.value = tasks.value.map(function(oldObj) {
 
+
     return {
       start: oldObj.date_do,
       end: oldObj.date_do,
       title: oldObj.name,
       content: oldObj.description,
+      id: oldObj.taskId,
     }
   })
 }

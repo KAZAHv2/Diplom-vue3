@@ -69,12 +69,10 @@ export const useUserStore = defineStore({
 
     async fetchUserData() {
       this.user = auth.currentUser
-      console.log(this.user)
 
     },
 
     async login(payload) {
-      console.log(payload)
 
       await signInWithEmailAndPassword(auth,payload.email,payload.password)
         .then(()=> {
