@@ -136,7 +136,7 @@ export const DataDB = defineStore({
         {
           name: payload.name,
           description: payload.description,
-          date_do: payload.Ldate,
+          date_do: payload.date,
           clietn_id: payload.clietn_id,
           maket_link: payload.maket_link,
           client_name: payload.client_name,

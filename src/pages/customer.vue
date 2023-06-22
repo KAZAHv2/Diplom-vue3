@@ -106,7 +106,11 @@ function udateTask(item){
   customer.value.name = getCustomerName(item.clietn_id)
   task.value.maket_link = item.maket_link
   task.value.Ldate = item.date_do
-  task.value. uuid = item.taskId
+  task.value.uuid = item.taskId
+  task.value.date = item.date_do
+  task.value.category_id = item.category_id
+  task.value.category_name = item.category_name
+  task.value.client_name = item.client_name
 }
 
 function clancel(){
@@ -177,7 +181,6 @@ async function deleteTask(){
 async function createTask() {
   task.value.date = getCurrentDateTime()
   task.value.uuid = uuidv4()
-  task.value.client_name = customer.value.name
   console.log(task.value)
 
   if (findCategoryIdByCategoryName(task.value.category_name) === null){
@@ -231,11 +234,14 @@ async function editTask(){
   if (Object.values(customer.value).some(value => value === '')) {
     console.log('lox')
     console.log(customer.value)
+    console.log(task.value)
+
     await dataBase.updateTask(task.value)
     cancelAddTask()
   } else {
     console.log('ne lox')
     task.value.clietn_id = customer.value.customerID
+    console.log(task.value)
 
     await dataBase.updateTask(task.value)
     await dataBase.addСustomer(customer.value)
