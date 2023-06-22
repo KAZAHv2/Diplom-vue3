@@ -13,6 +13,11 @@ const form = ref({
   email: '',
   password: '',
 })
+
+const resPass = ref({
+  email: '',
+})
+
 const isErrorVisible = ref(false)
 const vuetifyTheme = useTheme()
 const authThemeMask = computed(() => {
@@ -25,6 +30,8 @@ const rulesUser = ref({
     v => /.+@.+/.test(v) || 'Некоректний запис пошти',
   ],
 })
+
+const resPassword = ref(false)
 
 const isPasswordVisible = ref(false)
 
@@ -39,63 +46,69 @@ const logIn = async () => {
     isErrorVisible.value = true
   }
 }
+
+async function resetPass(){
+
+  console.log(resPass.value.email)
+
+  await userStore.resetPass(resPass.value.email)
+}
 </script>
 
 <template>
-  <div class='auth-wrapper d-flex align-center justify-center pa-4'>
+  <div class="auth-wrapper d-flex align-center justify-center pa-4">
     <VCard
-      class='auth-card pa-4 pt-7'
-      max-width='448'
+      class="auth-card pa-4 pt-7"
+      max-width="448"
     >
-      <VCardItem class='justify-center'>
+      <VCardItem class="justify-center">
         <template #prepend>
-          <div class='d-flex'>
-            <div v-html='logo' />
+          <div class="d-flex">
+            <div v-html="logo" />
           </div>
         </template>
 
-        <VCardTitle class='font-weight-semibold text-2xl text-uppercase'>
+        <VCardTitle class="font-weight-semibold text-2xl text-uppercase">
           Увійти
         </VCardTitle>
       </VCardItem>
 
       <VCardText>
-        <VForm @submit.prevent='() => {}'>
+        <VForm @submit.prevent="() => {}">
           <VRow>
             <!-- email -->
-            <VCol cols='12'>
+            <VCol cols="12">
               <VTextField
-                v-model='form.email'
-                label='Пошта'
-                type='email'
+                v-model="form.email"
+                label="Пошта"
+                type="email"
                 :rules="rulesUser.emailRules"
-                @input='isErrorVisible = false'
+                @input="isErrorVisible = false"
               />
             </VCol>
 
             <!-- password -->
-            <VCol cols='12'>
+            <VCol cols="12">
               <VTextField
-                v-model='form.password'
-                label='Пароль'
+                v-model="form.password"
+                label="Пароль"
                 :type="isPasswordVisible ? 'text' : 'password'"
                 :append-inner-icon="isPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-                @click:append-inner='isPasswordVisible = !isPasswordVisible'
-                @input='isErrorVisible = false'
+                @click:append-inner="isPasswordVisible = !isPasswordVisible"
+                @input="isErrorVisible = false"
               />
 
               <!-- remember me checkbox -->
-              <div class='d-flex align-center justify-space-between flex-wrap mt-1 mb-4'>
-
+              <div class="d-flex align-center justify-space-between flex-wrap mt-1 mb-4">
                 <a
-                  class='ms-2 mb-1'
-                  href='javascript:void(0)'
+                  class="ms-2 mb-1"
+                  @click="resPassword = true"
                 >
                   Забули пароль?
                 </a>
               </div>
 
-              <div class='mt-1 mb-4'>
+              <div class="mt-1 mb-4">
                 <VAlert 
                   type="error" 
                   :class="isErrorVisible ? 'd-flex' : 'd-none'"
@@ -107,7 +120,7 @@ const logIn = async () => {
               <!-- login button -->
               <VBtn
                 block
-                @click='logIn'
+                @click="logIn"
               >
                 Увійти
               </VBtn>
@@ -115,12 +128,12 @@ const logIn = async () => {
 
             <!-- create account -->
             <VCol
-              cols='12'
-              class='text-center text-base'
+              cols="12"
+              class="text-center text-base"
             >
               <span>Ще немає аккаунту?</span>
               <RouterLink
-                class='text-primary ms-2'
+                class="text-primary ms-2"
                 :to="{ name: 'register' }"
               >
                 Зареєструйтесь
@@ -132,23 +145,64 @@ const logIn = async () => {
     </VCard>
 
     <VImg
-      class='auth-footer-start-tree d-none d-md-block'
-      :src='authV1Tree'
-      :width='250'
+      class="auth-footer-start-tree d-none d-md-block"
+      :src="authV1Tree"
+      :width="250"
     />
 
     <VImg
-      :src='authV1Tree2'
-      class='auth-footer-end-tree d-none d-md-block'
-      :width='350'
+      :src="authV1Tree2"
+      class="auth-footer-end-tree d-none d-md-block"
+      :width="350"
     />
 
     <!-- bg img -->
     <VImg
-      class='auth-footer-mask d-none d-md-block'
-      :src='authThemeMask'
+      class="auth-footer-mask d-none d-md-block"
+      :src="authThemeMask"
     />
   </div>
+
+  <VDialog
+    v-model="resPassword"
+    persistent
+    max-width="400"
+  >
+    <VCard>
+      <VCardTitle style="text-align: center">
+        Введіть пошту для відновлення
+      </VCardTitle>
+      <VCardText>
+        <VTextField
+          v-model="resPass.email"
+          label="Пошта"
+          type="email"
+          :rules="rulesUser.emailRules"
+          @input="isErrorVisible = false"
+        />
+      </VCardText>
+
+      <VCardActions>
+        <VSpacer />
+        <VBtn
+          color="green darken-1"
+          text
+          @click="resPassword = false; resPass.email = ''"
+        >
+          Відмінити
+        </VBtn>
+
+        <VBtn
+          color="green darken-1"
+          text
+          :disabled='!resPass.email'
+          @click="resetPass(); resPassword = false; resPass.email = ''"
+        >
+          Змінити
+        </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
 </template>
 
 <style lang='scss'>

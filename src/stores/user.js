@@ -6,7 +6,7 @@ import router from '../router'
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app"
 import { getDatabase} from "firebase/database"
-import {getAuth,createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, signOut,updatePassword,updateEmail} from 'firebase/auth'
+import {sendPasswordResetEmail,getAuth,createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, signOut,updatePassword,updateEmail} from 'firebase/auth'
 
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -135,6 +135,17 @@ export const useUserStore = defineStore({
           this.setToken(auth.currentUser.accessToken)
         }).catch(function(error) {
           console.log(error)
+        })
+
+    },
+    async resetPass(Email){
+      console.log(Email)
+      await sendPasswordResetEmail(auth, Email)
+        .then(() => {
+        })
+        .catch(error => {
+          const errorCode = error.code
+          const errorMessage = error.message
         })
 
     },

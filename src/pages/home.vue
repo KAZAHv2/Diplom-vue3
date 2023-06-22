@@ -133,7 +133,6 @@ async function allTask() {
 
   } catch (error) {
     console.error(error)
-
   }
 }
 
